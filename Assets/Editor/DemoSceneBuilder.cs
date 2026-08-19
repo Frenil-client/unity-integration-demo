@@ -30,6 +30,9 @@ namespace SquadDemo.EditorTools
         private const string CardPrefabPath = PrefabFolder + "/PlayerCard.prefab";
         private const string ScenePath = SceneFolder + "/SquadDemo.unity";
 
+        /// <summary>위쪽 헤더/버튼 영역이 시작되는 높이 비율. 위 30%가 조작부, 아래 70%가 목록이다.</summary>
+        private const float TopSectionRatio = 0.7f;
+
         private static readonly Color Background = new Color(0.11f, 0.13f, 0.16f);
         private static readonly Color CardColor = new Color(0.17f, 0.20f, 0.25f);
         private static readonly Color Accent = new Color(0.20f, 0.55f, 0.95f);
@@ -127,19 +130,28 @@ namespace SquadDemo.EditorTools
 
             var root = Panel("Root", canvas.transform, Background);
             Stretch(root);
-            VerticalLayout(root, 16, 24);
+
+            // 화면을 비율로 자른다. 위 30%는 헤더/버튼/로그, 아래 70%는 선수 목록.
+            // 픽셀 높이로 쌓으면 해상도나 종횡비가 바뀔 때 비율이 무너지므로 앵커로 나눈다.
+            var topSection = Section("TopSection", root, bottom: TopSectionRatio, top: 1f);
+            var listSection = Section("ListSection", root, bottom: 0f, top: TopSectionRatio);
+
+            // 위 영역은 남는 높이를 가중치로 나눠 갖는다. 고정 픽셀 높이를 주면
+            // 30%가 그보다 작아지는 종횡비에서 내용이 영역 밖으로 넘친다.
+            var topLayout = VerticalLayout(topSection, 12, 24);
+            topLayout.childForceExpandHeight = true;
 
             // 헤더 - 제목 + 레드닷 배지
-            var header = Empty("Header", root);
-            FixedHeight(header, 96f);
+            var header = Empty("Header", topSection);
+            Weight(header, 1f, minHeight: 56f);
             HorizontalLayout(header, 12, 0);
             var title = Text("Title", header, "SQUAD", 56f);
             Flexible(title.rectTransform, width: 1f);
             BuildHeaderBadge(header);
 
             // 조작 버튼
-            var buttonRow = Empty("Buttons", root);
-            FixedHeight(buttonRow, 104f);
+            var buttonRow = Empty("Buttons", topSection);
+            Weight(buttonRow, 1f, minHeight: 64f);
             HorizontalLayout(buttonRow, 12, 0);
             var trainButton = Button("TrainButton", buttonRow, "훈련");
             var signButton = Button("SignButton", buttonRow, "영입");
@@ -149,12 +161,16 @@ namespace SquadDemo.EditorTools
             AttachButtonBadge(signButton.GetComponent<RectTransform>(), SquadRedDotBridge.SigningsNode);
             AttachButtonBadge(claimButton.GetComponent<RectTransform>(), SquadRedDotBridge.TrainingReportsNode);
 
-            // 카드 목록 - 남는 공간을 모두 차지하고, 넘치면 스크롤된다
-            var cardRoot = BuildScrollView("CardScrollView", root);
+            // 로그 - 버튼 바로 아래에 둔다. 피드백은 그 동작을 한 자리 가까이 있는 편이 낫고,
+            // 아래 영역은 통째로 목록에 내주기 위해서이기도 하다.
+            var logText = Text("Log", topSection, string.Empty, 30f);
+            Weight(logText.rectTransform, 0.6f, minHeight: 36f);
 
-            // 로그
-            var logText = Text("Log", root, string.Empty, 30f);
-            PreferredHeight(logText, 64f);
+            // 카드 목록 - 아래 70%를 통째로 차지하고, 넘치면 스크롤된다
+            var cardScroll = BuildScrollView("CardScrollView", listSection, out var cardRoot);
+            Stretch(cardScroll);
+            cardScroll.offsetMin = new Vector2(24f, 24f);
+            cardScroll.offsetMax = new Vector2(-24f, 0f);
 
             // 팝업은 Root보다 뒤에 만들어야 위에 그려진다 (UGUI는 형제 순서가 곧 그리기 순서).
             var reportPopup = BuildReportPopup(canvas.transform);
@@ -217,7 +233,8 @@ namespace SquadDemo.EditorTools
             Element(closeRect).flexibleWidth = 0f;
             Preferred(closeRect, width: 88f);
 
-            var listRoot = BuildScrollView("ReportScrollView", panel);
+            var reportScroll = BuildScrollView("ReportScrollView", panel, out var listRoot);
+            FlexibleHeight(reportScroll, 1f);
 
             // 행 템플릿 - 목록 바깥에 비활성으로 두고 복제해서 쓴다.
             var rowTemplate = Text("RowTemplate", container, "-", 30f);
@@ -239,10 +256,12 @@ namespace SquadDemo.EditorTools
         // 선수를 계속 영입하면 목록이 화면을 넘어간다. 스크롤 뷰가 없으면 넘친 카드를
         // 볼 수 없을 뿐 아니라, 목록이 아래쪽 로그까지 화면 밖으로 밀어내 버린다.
         // 그래서 목록은 스크롤 뷰 안에 넣고, 남는 세로 공간을 이 뷰가 흡수하게 한다.
-        private static RectTransform BuildScrollView(string name, RectTransform parent)
+        // 스크롤 뷰 오브젝트를 돌려주고, 항목이 들어갈 콘텐츠는 out으로 넘긴다.
+        // 바깥 크기를 정하는 방식이 호출처마다 다르기 때문에(앵커 고정 / 레이아웃 배분)
+        // 여기서는 크기를 건드리지 않는다.
+        private static RectTransform BuildScrollView(string name, RectTransform parent, out RectTransform content)
         {
             var scrollView = Empty(name, parent);
-            FlexibleHeight(scrollView, 1f);
 
             var scroll = scrollView.gameObject.AddComponent<ScrollRect>();
             scroll.horizontal = false;
@@ -256,7 +275,7 @@ namespace SquadDemo.EditorTools
 
             // 스크롤 콘텐츠는 부모 레이아웃이 크기를 잡아주지 않으므로
             // 여기서는 ContentSizeFitter가 자기 높이를 스스로 결정해야 한다.
-            var content = Empty("Content", viewport);
+            content = Empty("Content", viewport);
             content.anchorMin = new Vector2(0f, 1f);
             content.anchorMax = new Vector2(1f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
@@ -270,7 +289,7 @@ namespace SquadDemo.EditorTools
             scroll.viewport = viewport;
             scroll.content = content;
 
-            return content;
+            return scrollView;
         }
 
         // 상단 합계 배지 - Character 노드는 CharacterLevelUp(훈련 리포트)과
@@ -320,9 +339,10 @@ namespace SquadDemo.EditorTools
             var scaler = go.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080f, 1920f);
-            // 세로로 쌓이는 목록 화면이라 높이를 기준으로 맞춘다.
-            // 0.5로 두면 가로가 긴 Game 뷰에서 UI가 과하게 확대돼 목록이 몇 장 못 들어간다.
-            scaler.matchWidthOrHeight = 1f;
+            // 너비 기준(0)으로 맞춘다. 가로 폭이 항상 1080 단위로 고정되므로 버튼과 카드의
+            // 크기가 해상도와 무관하게 일정하고, 세로는 화면 비율만큼 늘거나 줄어든다.
+            // 그래서 세로 배치는 픽셀이 아니라 비율(TopSectionRatio)로 나눈다.
+            scaler.matchWidthOrHeight = 0f;
 
             return canvas;
         }
@@ -400,6 +420,29 @@ namespace SquadDemo.EditorTools
 
         private static void FlexibleHeight(RectTransform rect, float value) =>
             Element(rect).flexibleHeight = value;
+
+        /// <summary>부모 높이의 [bottom, top] 구간을 차지하는 빈 영역을 만든다. 비율이 곧 레이아웃이다.</summary>
+        private static RectTransform Section(string name, RectTransform parent, float bottom, float top)
+        {
+            var rect = Empty(name, parent);
+            rect.anchorMin = new Vector2(0f, bottom);
+            rect.anchorMax = new Vector2(1f, top);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return rect;
+        }
+
+        /// <summary>
+        /// 남는 높이를 가중치로 나눠 갖게 한다. preferredHeight를 -1로 두어야
+        /// 레이아웃 그룹이 고정 높이 대신 flexible 배분을 쓴다.
+        /// </summary>
+        private static void Weight(RectTransform rect, float flexibleHeight, float minHeight)
+        {
+            var element = Element(rect);
+            element.minHeight = minHeight;
+            element.preferredHeight = -1f;
+            element.flexibleHeight = flexibleHeight;
+        }
 
         private static TextMeshProUGUI Text(string name, Transform parent, string content, float size,
                                             TextAlignmentOptions alignment = TextAlignmentOptions.Left)
