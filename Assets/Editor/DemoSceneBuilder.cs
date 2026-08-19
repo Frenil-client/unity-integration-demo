@@ -149,9 +149,8 @@ namespace SquadDemo.EditorTools
             AttachButtonBadge(signButton.GetComponent<RectTransform>(), SquadRedDotBridge.SigningsNode);
             AttachButtonBadge(claimButton.GetComponent<RectTransform>(), SquadRedDotBridge.TrainingReportsNode);
 
-            // 카드 목록 - 자식 높이만큼 스스로 커진다
-            var cardRoot = Empty("Cards", root);
-            VerticalLayout(cardRoot, 10, 0);
+            // 카드 목록 - 남는 공간을 모두 차지하고, 넘치면 스크롤된다
+            var cardRoot = BuildCardScrollView(root);
 
             // 로그
             var logText = Text("Log", root, string.Empty, 30f);
@@ -173,6 +172,43 @@ namespace SquadDemo.EditorTools
             bso.FindProperty("_squadView").objectReferenceValue = view;
             bso.ApplyModifiedPropertiesWithoutUndo();
 
+        }
+
+        // 선수를 계속 영입하면 목록이 화면을 넘어간다. 스크롤 뷰가 없으면 넘친 카드를
+        // 볼 수 없을 뿐 아니라, 목록이 아래쪽 로그까지 화면 밖으로 밀어내 버린다.
+        // 그래서 목록은 스크롤 뷰 안에 넣고, 남는 세로 공간을 이 뷰가 흡수하게 한다.
+        private static RectTransform BuildCardScrollView(RectTransform parent)
+        {
+            var scrollView = Empty("CardScrollView", parent);
+            FlexibleHeight(scrollView, 1f);
+
+            var scroll = scrollView.gameObject.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 40f;
+
+            var viewport = Empty("Viewport", scrollView);
+            Stretch(viewport);
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            // 스크롤 콘텐츠는 부모 레이아웃이 크기를 잡아주지 않으므로
+            // 여기서는 ContentSizeFitter가 자기 높이를 스스로 결정해야 한다.
+            var content = Empty("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = Vector2.zero;
+
+            VerticalLayout(content, 10, 0);
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.viewport = viewport;
+            scroll.content = content;
+
+            return content;
         }
 
         // 상단 합계 배지 - Character 노드는 CharacterLevelUp(훈련 리포트)과
@@ -222,7 +258,9 @@ namespace SquadDemo.EditorTools
             var scaler = go.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080f, 1920f);
-            scaler.matchWidthOrHeight = 0.5f;
+            // 세로로 쌓이는 목록 화면이라 높이를 기준으로 맞춘다.
+            // 0.5로 두면 가로가 긴 Game 뷰에서 UI가 과하게 확대돼 목록이 몇 장 못 들어간다.
+            scaler.matchWidthOrHeight = 1f;
 
             return canvas;
         }
@@ -297,6 +335,9 @@ namespace SquadDemo.EditorTools
 
         private static void Flexible(RectTransform rect, float width) =>
             Element(rect).flexibleWidth = width;
+
+        private static void FlexibleHeight(RectTransform rect, float value) =>
+            Element(rect).flexibleHeight = value;
 
         private static TextMeshProUGUI Text(string name, Transform parent, string content, float size,
                                             TextAlignmentOptions alignment = TextAlignmentOptions.Left)
