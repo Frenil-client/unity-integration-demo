@@ -60,7 +60,7 @@
 ```json
 {
   "dependencies": {
-    "com.frenil.mvvm": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.0",
+    "com.frenil.mvvm": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.1",
     "com.frenil.stat-system": "https://github.com/Frenil-client/unity-stat-system.git#v2.0.1",
     "com.frenil.reddot-system": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.1"
   }
