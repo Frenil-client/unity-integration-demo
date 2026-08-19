@@ -29,6 +29,9 @@ namespace SquadDemo.Domain
         /// <summary>영입 가능한 선수가 남아 있는지.</summary>
         public bool CanSign => _nextProspect < Prospects.Length;
 
+        /// <summary>아직 영입하지 않은 유망주 수. 레드닷 카운트의 소스다.</summary>
+        public int RemainingProspects => Prospects.Length - _nextProspect;
+
         public SquadRoster()
         {
             // 시작 스쿼드 두 명

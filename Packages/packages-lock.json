@@ -8,13 +8,13 @@
       "hash": "32c0aeb42651bf8e3ddfccd6d38f4601feb90930"
     },
     "com.frenil.reddot-system": {
-      "version": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.1",
+      "version": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.2",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.textmeshpro": "3.0.6"
       },
-      "hash": "6c2f241e9cc922e43627f0a2ca1bdc653ec2dfe0"
+      "hash": "e6eab5c629a22fd2fd26ce9dd27eec0dff0377f9"
     },
     "com.frenil.stat-system": {
       "version": "https://github.com/Frenil-client/unity-stat-system.git#v2.0.1",

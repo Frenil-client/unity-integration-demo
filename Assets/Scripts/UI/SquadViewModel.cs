@@ -15,7 +15,7 @@ namespace SquadDemo.UI
         private readonly SquadRoster _roster = new SquadRoster();
         private readonly ObservableList<PlayerCardViewModel> _cards = new ObservableList<PlayerCardViewModel>();
 
-        private readonly Observable<string> _log = new Observable<string>("훈련 버튼을 눌러 스쿼드를 성장시키세요.");
+        private readonly Observable<string> _log = new Observable<string>("훈련하면 리포트가 쌓입니다. 버튼의 빨간 점이 각 알림, 상단 배지가 그 합계입니다.");
         private readonly Observable<int> _unreadReports = new Observable<int>(0);
         private readonly Observable<int> _availableSignings = new Observable<int>(0);
         private readonly Observable<bool> _canSign = new Observable<bool>(false);
@@ -89,7 +89,7 @@ namespace SquadDemo.UI
         private void RefreshSigningState()
         {
             _canSign.Value = _roster.CanSign;
-            _availableSignings.Value = _roster.CanSign ? 1 : 0;
+            _availableSignings.Value = _roster.RemainingProspects;
         }
 
         public override void Dispose()

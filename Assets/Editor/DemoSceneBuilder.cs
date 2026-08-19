@@ -135,7 +135,7 @@ namespace SquadDemo.EditorTools
             HorizontalLayout(header, 12, 0);
             var title = Text("Title", header, "SQUAD", 56f);
             Flexible(title.rectTransform, width: 1f);
-            BuildBadge(header);
+            BuildHeaderBadge(header);
 
             // 조작 버튼
             var buttonRow = Empty("Buttons", root);
@@ -144,6 +144,10 @@ namespace SquadDemo.EditorTools
             var trainButton = Button("TrainButton", buttonRow, "훈련");
             var signButton = Button("SignButton", buttonRow, "영입");
             var claimButton = Button("ClaimButton", buttonRow, "리포트 확인");
+
+            // 리프 노드의 알림은 해당 동작을 하는 버튼에 직접 붙인다.
+            AttachButtonBadge(signButton.GetComponent<RectTransform>(), SquadRedDotBridge.SigningsNode);
+            AttachButtonBadge(claimButton.GetComponent<RectTransform>(), SquadRedDotBridge.TrainingReportsNode);
 
             // 카드 목록 - 자식 높이만큼 스스로 커진다
             var cardRoot = Empty("Cards", root);
@@ -171,26 +175,35 @@ namespace SquadDemo.EditorTools
 
         }
 
-        private static RedDotCountIcon BuildBadge(Transform parent)
+        // 상단 합계 배지 - Character 노드는 CharacterLevelUp(훈련 리포트)과
+        // CharacterEquipment(영입)의 부모라, 두 알림의 합계가 트리에서 자동으로 올라온다.
+        private static void BuildHeaderBadge(Transform parent)
         {
             var holder = Empty("Badge", parent);
             Preferred(holder, width: 96f);
+            CreateBadge(holder, SquadRedDotBridge.SummaryNode, new Vector2(1f, 0.5f), Vector2.zero, 72f);
+        }
 
-            var dot = Panel("Dot", holder, DotColor);
-            dot.sizeDelta = new Vector2(72f, 72f);
-            dot.anchorMin = new Vector2(1f, 0.5f);
-            dot.anchorMax = new Vector2(1f, 0.5f);
-            dot.pivot = new Vector2(1f, 0.5f);
-            dot.anchoredPosition = Vector2.zero;
+        // 버튼 우상단에 붙는 알림 점. 어떤 버튼의 알림인지 한눈에 보이게 하는 것이 목적이다.
+        private static void AttachButtonBadge(RectTransform host, RedDotType type) =>
+            CreateBadge(host, type, new Vector2(1f, 1f), new Vector2(-8f, -8f), 44f);
 
-            var countText = Text("Count", dot, "0", 32f, TextAlignmentOptions.Center);
+        private static RedDotCountIcon CreateBadge(RectTransform host, RedDotType type,
+                                                   Vector2 anchor, Vector2 offset, float size)
+        {
+            var dot = Panel("RedDot", host, DotColor);
+            dot.sizeDelta = new Vector2(size, size);
+            dot.anchorMin = anchor;
+            dot.anchorMax = anchor;
+            dot.pivot = anchor;
+            dot.anchoredPosition = offset;
+
+            var countText = Text("Count", dot, "0", size * 0.45f, TextAlignmentOptions.Center);
             Stretch(countText.rectTransform);
 
-            var icon = holder.gameObject.AddComponent<RedDotCountIcon>();
+            var icon = host.gameObject.AddComponent<RedDotCountIcon>();
             var so = new SerializedObject(icon);
-            // Character 노드는 CharacterLevelUp(훈련 리포트) + CharacterEquipment(영입)의 부모라,
-            // 배지 하나에 두 알림의 합계가 트리에서 자동으로 집계된다.
-            so.FindProperty("_redDotType").intValue = (int)SquadRedDotBridge.SummaryNode;
+            so.FindProperty("_redDotType").intValue = (int)type;
             so.FindProperty("_icon").objectReferenceValue = dot.gameObject;
             so.FindProperty("_countText").objectReferenceValue = countText;
             so.ApplyModifiedPropertiesWithoutUndo();
