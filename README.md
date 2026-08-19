@@ -1,12 +1,17 @@
 # Unity Integration Demo
 
-독립적으로 만든 Unity 패키지 세 개가 하나의 화면에서 맞물리는 것을 보여주는 데모입니다. 소재는 축구 스쿼드 관리입니다.
+독립적으로 만든 Unity 패키지 세 개가 하나의 화면에서 맞물리는 것을 보여주는 데모입니다.
+소재는 모바일 RPG 로비입니다.
 
 | 패키지 | 이 데모에서 맡은 역할 |
 |---|---|
-| [unity-stat-system](https://github.com/Frenil-client/unity-stat-system) | 선수 능력치 보관 · 상한 클램프 · 변경 통지 |
+| [unity-stat-system](https://github.com/Frenil-client/unity-stat-system) | 캐릭터 능력치 보관 · 상한 클램프 · 변경 통지 |
 | [unity-mvvm](https://github.com/Frenil-client/unity-mvvm) | 능력치/목록을 UI에 바인딩, 구독 수명 관리 |
-| [unity-reddot-system](https://github.com/Frenil-client/unity-reddot-system) | 미확인 알림 집계와 헤더 배지 표시 |
+| [unity-reddot-system](https://github.com/Frenil-client/unity-reddot-system) | 알림 집계와 배지 표시 |
+
+소재를 RPG 로비로 잡은 이유가 있습니다. 세 패키지는 원래 모바일 RPG를 전제로 만들어졌고,
+`StatId`는 공격력·마력·방어력을, `RedDotType`은 상점·캐릭터·퀘스트 메뉴 트리를 그대로 정의합니다.
+그래서 이 데모는 **패키지가 정의한 용어를 번역 없이 쓰는** 예제가 됩니다.
 
 ---
 
@@ -15,28 +20,29 @@
 이 데모에서 가장 중요한 건 화면이 아니라 **결합이 어디에 있는가**입니다.
 
 ```
-  SquadPlayer ──has──> Stat                    (stat-system)
-                        │
-                        │ event Changed(StatId, StatValue)   ← 순수 C# 이벤트
-                        ▼
-              StatObservableBridge             ★ 데모의 Glue/
-                        │
-                        │ Observable<int>
-                        ▼
-              PlayerCardViewModel ──> ObservableList<T>   (mvvm)
-                        │                    │
-                        │                    ▼
-                        │              SquadView ──> 카드 슬롯만 갱신
-                        ▼
-              SquadRedDotBridge               ★ 데모의 Glue/
-                        │
-                        │ SetCount(node, n)
-                        ▼
-                  RedDotNode 트리 ──> 부모로 합계 집계 ──> 헤더 배지  (reddot-system)
+  Hero ──has──> Stat                          (stat-system)
+                 │
+                 │ event Changed(StatId, StatValue)   ← 순수 C# 이벤트
+                 ▼
+       StatObservableBridge                   ★ 데모의 Glue/
+                 │
+                 │ Observable<int>
+                 ▼
+       HeroCardViewModel ──> ObservableList<T>        (mvvm)
+                 │                  │
+                 │                  ▼
+                 │            LobbyView ──> 카드 슬롯만 갱신
+                 ▼
+       LobbyRedDotBridge                      ★ 데모의 Glue/
+                 │
+                 │ SetCount(node, n)
+                 ▼
+           RedDotNode 트리 ──> 부모로 합계 집계 ──> 헤더 배지  (reddot-system)
 ```
 
 `stat-system`은 `Observable`을 모르고, `mvvm`은 `Stat`을 모르며, `reddot-system`은 둘 다 모릅니다.
-세 패키지를 잇는 코드는 전부 이 저장소의 [`Assets/Scripts/Glue/`](Assets/Scripts/Glue) 안에만 있습니다.
+정확히 말하면 **한 패키지의 출력을 다른 패키지의 입력 타입으로 바꾸는 코드**가
+[`Assets/Scripts/Glue/`](Assets/Scripts/Glue)의 두 파일뿐입니다.
 
 이게 왜 중요하냐면, 각 패키지의 README가 "외부 의존 없는 드롭인"이라고 주장하기 때문입니다.
 연결 코드를 패키지 안에 넣는 순간 그 주장이 깨집니다. 그래서 `Stat`은 UI 프레임워크를 모르는
@@ -75,15 +81,14 @@
 
 1. Unity 6 (6000.3.9f1)로 이 프로젝트를 엽니다 (패키지는 manifest에서 자동으로 받아옵니다)
 2. TextMeshPro Essentials 임포트 창이 뜨면 **Import**를 누릅니다
-3. 한글 폰트를 준비합니다 — 아래 "한글 표시" 참고
-4. 메뉴에서 **Tools ▸ Squad Demo ▸ 씬과 프리팹 생성**을 실행합니다
-5. 만들어진 `Assets/Scenes/SquadDemo.unity`를 열고 재생합니다
+3. 메뉴에서 **Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성**을 실행합니다
+4. 만들어진 `Assets/Scenes/LobbyDemo.unity`를 열고 재생합니다
 
-4번이 만드는 것은 두 가지입니다.
+3번이 만드는 것은 두 가지입니다.
 
-- `Assets/Prefabs/PlayerCard.prefab` — 선수 카드 프리팹. `SquadView`가 목록 항목마다 하나씩 찍습니다
-- `Assets/Scenes/SquadDemo.unity` — 캔버스·버튼·레드닷 배지·`RedDotManager`가 배치되고
-  `SquadView`와 `SquadDemoBootstrap`의 참조가 전부 연결된 씬
+- `Assets/Prefabs/HeroCard.prefab` — 캐릭터 카드 프리팹. `LobbyView`가 목록 항목마다 하나씩 찍습니다
+- `Assets/Scenes/LobbyDemo.unity` — 캔버스·버튼·레드닷 배지·팝업이 배치되고
+  `LobbyView`와 `LobbyDemoBootstrap`의 참조가 전부 연결된 씬
 
 **UI 조립 코드는 런타임에 없습니다.** 예전에는 재생할 때마다 코드로 화면을 만들었는데, 그러면
 레이아웃을 바꿀 때마다 코드를 고쳐야 하고 Inspector에서 확인할 수도 없습니다. 조립은
@@ -102,15 +107,15 @@
 그래서 세로 배치는 픽셀이 아니라 **비율로** 나눕니다.
 
 ```
-┌─────────────────────────┐
-│ SQUAD              ● 4  │  위 30%  TopSection
-│ [훈련] [영입] [리포트]   │          헤더 · 버튼 · 로그
-│ 로그 메시지              │
-├─────────────────────────┤
-│ 선수 카드                │  아래 70%  ListSection
-│ 선수 카드                │           스크롤 목록
-│ ...                     │
-└─────────────────────────┘
+┌──────────────────────────────┐
+│ LOBBY                   ● 7  │  위 30%  TopSection
+│ [강화][소환●4][보상●2][임무●1] │          헤더 · 버튼 · 로그
+│ 로그 메시지                   │
+├──────────────────────────────┤
+│ 캐릭터 카드                   │  아래 70%  ListSection
+│ 캐릭터 카드                   │           스크롤 목록
+│ ...                          │
+└──────────────────────────────┘
 ```
 
 두 영역은 앵커로 잘라서 어떤 해상도에서도 30 : 70이 유지되고, 위 영역 안의 세 줄은
@@ -122,7 +127,7 @@
 ### 한글 표시
 
 TMP 기본 폰트(LiberationSans)에는 한글 글리프가 없어 텍스트가 □로 나옵니다. OFL 라이선스 한글 폰트
-(Noto Sans KR, Pretendard 등)를 `Assets/Fonts/`에 넣고 우클릭 ▸ **Create ▸ TextMeshPro ▸ Font Asset**으로
+(Noto Sans KR, 나눔고딕 등)를 `Assets/Fonts/`에 넣고 우클릭 ▸ **Create ▸ TextMeshPro ▸ Font Asset**으로
 폰트 에셋을 만든 뒤, 인스펙터에서 **Atlas Population Mode를 `Dynamic`으로** 바꿉니다. 한글은 완성형
 음절만 11,172자라 Static 아틀라스로는 감당이 안 됩니다.
 
@@ -133,37 +138,43 @@ TMP 기본 폰트(LiberationSans)에는 한글 글리프가 없어 텍스트가 
 
 ## 화면에서 확인할 수 있는 것
 
-**훈련** — 무작위 선수의 능력치가 오릅니다. `Stat`이 값을 바꾸고 → 브리지가 `Observable`로 옮기고
-→ 해당 카드의 숫자만 갱신됩니다. 동시에 미확인 리포트 수가 늘어 헤더 배지의 숫자가 올라갑니다.
+**강화** — 무작위 캐릭터의 능력치가 오릅니다. `Stat`이 값을 바꾸고 → 브리지가 `Observable`로 옮기고
+→ 해당 카드의 숫자만 갱신됩니다. 동시에 강화 리포트가 쌓여 `보상` 버튼의 점이 올라가고,
+일정 횟수마다 일일 임무가 완료되어 `임무` 버튼의 점도 올라갑니다.
 
-능력치가 99에 도달하면 `Stat`이 클램프하고, **값이 바뀌지 않았으므로 통지도 발행되지 않습니다.**
+능력치가 상한(999)에 도달하면 `Stat`이 클램프하고, **값이 바뀌지 않았으므로 통지도 발행되지 않습니다.**
 UI는 아무 일도 하지 않고 로그만 "이미 최대치"로 바뀝니다. 변경이 없을 때 이벤트를 쏘지 않는
 정책이 UI 갱신을 자동으로 줄여 주는 지점입니다.
 
-**영입** — 목록에 카드가 하나 추가되고 버튼의 빨간 점이 하나 줄어듭니다.
+**소환** — 목록에 카드가 하나 추가되고 버튼의 점이 하나 줄어듭니다.
 `ObservableList`가 `Added` 델타 한 건만 발행하므로 기존 카드들은 다시 만들어지지 않고
 새 슬롯만 생깁니다. 목록이 화면보다 길어지면 스크롤됩니다.
-유망주를 다 영입하면 점이 사라지고 버튼이 비활성화됩니다.
 
-**리포트 확인** — 쌓인 리포트를 팝업으로 보여줍니다. **여는 순간이 곧 확인**이라 그 버튼의 점이
+**보상** — 쌓인 강화 리포트를 팝업으로 보여줍니다. **여는 순간이 곧 확인**이라 그 버튼의 점이
 바로 꺼집니다. 팝업은 오른쪽 위 `X` 또는 **바깥 어두운 영역을 클릭**하면 닫히고, 닫을 때
 리포트 목록이 비워집니다. 닫는 방법이 둘이지만 ViewModel의 같은 메서드로 들어가므로
 "어떤 경로로 닫으면 목록이 안 지워진다" 같은 어긋남이 생기지 않습니다.
-볼 리포트가 없으면 팝업을 열지 않고 로그로만 알립니다.
+
+**임무** — 완료된 일일 임무 보상을 수령하고 그 버튼의 점이 꺼집니다.
 
 ### 레드닷이 어디에 붙어 있나
 
-알림은 두 종류이고, 각각 **그 알림을 처리하는 버튼**에 점으로 표시됩니다.
+알림 세 종류가 **각각 다른 가지**에 들어가고, 합계는 트리가 만듭니다.
 
-| 위치 | 노드 | 의미 |
-|---|---|---|
-| `영입` 버튼 | `CharacterEquipment` | 아직 영입하지 않은 유망주 수 |
-| `리포트 확인` 버튼 | `CharacterLevelUp` | 확인하지 않은 훈련 리포트 수 |
-| 헤더 배지 | `Character` | **위 둘의 합계** |
+```
+MainMenu ● 7          ← 헤더 배지 (합계)
+├─ Shop      ● 4      └ ShopPackage       남은 소환권      → 소환 버튼
+├─ Character ● 2      └ CharacterLevelUp  미확인 강화 리포트 → 보상 버튼
+└─ Quest     ● 1      └ QuestDaily        완료된 일일 임무   → 임무 버튼
+```
 
-헤더 배지는 두 노드의 부모라서 합계가 자동으로 올라옵니다. 배지 쪽에는 합산 코드가 한 줄도 없고
-`RedDotNode`가 델타로 굴려 올릴 뿐입니다. 리포트를 다 확인해도 헤더 숫자가 남아 있다면
-영입할 유망주가 남아 있다는 뜻이고, 이는 트리가 실제로 합산하고 있다는 증거이기도 합니다.
+각 알림은 **그것을 처리하는 버튼**에 점으로 붙습니다. 강화 버튼에는 점이 없는데, 알림을
+만드는 쪽이지 처리하는 쪽이 아니기 때문입니다.
+
+헤더 배지는 세 가지의 최상위 부모라 합계가 자동으로 올라옵니다. 배지 쪽에는 합산 코드가
+한 줄도 없고 `RedDotNode`가 델타로 굴려 올릴 뿐입니다. 한 버튼의 점을 꺼도 헤더 숫자가
+남아 있다면 다른 가지에 처리할 것이 남아 있다는 뜻이고, 이는 트리가 실제로 합산하고 있다는
+증거이기도 합니다.
 
 `Window ▸ RedDot ▸ Tree Debugger`를 열어 두면 재생 중에 어느 노드에 값이 들어가고
 어떻게 부모로 올라가는지 실시간으로 보입니다.
@@ -172,34 +183,36 @@ UI는 아무 일도 하지 않고 로그만 "이미 최대치"로 바뀝니다. 
 
 ## 테스트
 
-`Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All` — 14종.
+`Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All` — 16종.
 
 Canvas도 GameObject도 만들지 않고 흐름 전체를 검증합니다. 도메인과 ViewModel이 Unity에
 의존하지 않기 때문인데, unity-mvvm이 ViewModel을 MonoBehaviour로 만들지 않은 이유가 정확히 이것입니다.
 
-고정한 것: 영입이 `Added` 델타 한 건만 내는지, 스탯 변경이 브리지를 거쳐 올바른 값으로
-도착하는지, 변화 없는 훈련이 침묵하는지, 상한 클램프가 걸리는지, `Dispose`가 `Stat.Changed`
-구독을 실제로 푸는지.
+고정한 것: 소환이 `Added` 델타 한 건만 내는지, 능력치 변경이 브리지를 거쳐 올바른 값으로
+도착하는지, 변화 없는 강화가 침묵하는지, 상한 클램프가 걸리는지, 세 알림 소스가 서로
+독립적으로 오르내리는지, `Dispose`가 `Stat.Changed` 구독을 실제로 푸는지.
 
 ---
 
 ## 이 데모가 드러낸 것
 
-데모를 만드는 과정에서 패키지 쪽 설계 문제 두 가지가 나왔습니다. 데모의 목적 중 하나가
-이런 걸 찾는 것이라, 감추지 않고 적어 둡니다.
+패키지만 만들고 끝냈으면 못 찾았을 문제들이 통합 과정에서 나왔습니다. 데모의 목적 중 하나가
+이런 걸 찾는 것이라 감추지 않고 적어 둡니다.
 
-**1. `ViewBase<T>`가 ViewModel 주입을 지원하지 않는다.**
-제약이 `where TViewModel : ViewModelBase, new()`라, 생성자 인자가 필요한 ViewModel은
-타입 인자로 넣는 것조차 불가능합니다. 목록의 각 항목처럼 "바깥에서 만들어 주입받는"
-ViewModel이 프레임워크의 기본 경로에서 빠져 있는 셈입니다. 그래서
-[`PlayerCardView`](Assets/Scripts/UI/PlayerCardView.cs)는 `ViewBase`를 쓰지 못하고
-`Bind`/`Unbind`를 직접 관리합니다. unity-mvvm에서 주입을 1급으로 다루도록 고칠 지점입니다.
+**1. `.meta` 파일 누락** (해결) — stat/reddot 패키지에 `.meta`가 하나도 없어, git URL로 설치하면
+Unity가 immutable 폴더에 meta를 만들지 못해 **에셋 전체가 무시**됐습니다. asmdef도 임포트되지 않아
+어셈블리 자체가 생기지 않았죠. 로컬 `Assets/` 복사로는 재현되지 않고 **UPM 설치에서만** 터지는
+종류의 버그입니다.
 
-**2. `RedDotType`이 enum이라 데모가 노드를 추가할 수 없다.**
-패키지가 제공하는 enum이므로 기존 `Character` 계열 노드에 데모의 의미를 얹었습니다.
-타입 안전하고 Inspector에서 고르기 좋다는 장점의 뒷면으로, 새 콘텐츠의 레드닷을 추가하려면
-클라이언트를 다시 빌드해야 한다는 뜻이기도 합니다. 라이브 서비스에서는 데이터 주도 키와의
-하이브리드를 고려할 지점입니다.
+**2. 초기화 순서 의존** (해결) — `RedDotIcon.OnEnable`이 `RedDotManager.Awake`보다 먼저 돌면
+아이콘이 어떤 노드에도 연결되지 못한 채 죽었습니다. 트리를 첫 접근 시 스스로 구성하는
+`RedDotTree`로 옮겨 순서라는 개념 자체를 없앴습니다.
+
+**3. `ViewBase<T>`가 ViewModel 주입을 지원하지 않는다** (미해결) — 제약이
+`where TViewModel : ViewModelBase, new()`라, 생성자 인자가 필요한 ViewModel은 타입 인자로
+넣는 것조차 불가능합니다. 그래서 [`HeroCardView`](Assets/Scripts/UI/HeroCardView.cs)는
+`ViewBase`를 쓰지 못하고 `Bind`/`Unbind`를 직접 관리합니다. unity-mvvm에서 주입을 1급으로
+다루도록 고칠 지점입니다.
 
 ---
 
@@ -207,20 +220,20 @@ ViewModel이 프레임워크의 기본 경로에서 빠져 있는 셈입니다. 
 
 ```
 Assets/Scripts/
-├─ Domain/            선수·스쿼드·훈련 (순수 C#, StatSystem만 사용)
-│  ├─ SquadPlayer.cs
-│  └─ SquadRoster.cs
+├─ Domain/            캐릭터·보유 목록·강화 (순수 C#, StatSystem만 사용)
+│  ├─ Hero.cs
+│  └─ HeroRoster.cs
 ├─ Glue/              ★ 패키지 간 결합이 존재하는 유일한 곳
 │  ├─ StatObservableBridge.cs   Stat.Changed -> Observable<int>
-│  └─ SquadRedDotBridge.cs      Observable<int> -> RedDot 노드 카운트
+│  └─ LobbyRedDotBridge.cs      Observable<int> -> RedDot 노드 카운트
 ├─ UI/
-│  ├─ SquadViewModel.cs         목록·로그·미확인 수 (Unity 비의존)
-│  ├─ PlayerCardViewModel.cs    카드 하나의 파생 상태 (Unity 비의존)
-│  ├─ SquadView.cs              ViewBase 상속, ListChange 델타 처리
-│  ├─ PlayerCardView.cs         카드 프리팹의 표시 담당
-│  └─ ReportPopupView.cs       훈련 리포트 팝업 (X · 바깥 클릭으로 닫기)
+│  ├─ LobbyViewModel.cs         목록·로그·알림 수 (Unity 비의존)
+│  ├─ HeroCardViewModel.cs      카드 하나의 파생 상태 (Unity 비의존)
+│  ├─ LobbyView.cs              ViewBase 상속, ListChange 델타 처리
+│  ├─ HeroCardView.cs           카드 프리팹의 표시 담당
+│  └─ RewardPopupView.cs        강화 리포트 팝업 (X · 바깥 클릭으로 닫기)
 └─ Bootstrap/
-   └─ SquadDemoBootstrap.cs     ViewModel과 레드닷 트리를 잇는 브리지 생성
+   └─ LobbyDemoBootstrap.cs     ViewModel과 레드닷 트리를 잇는 브리지 생성
 
 Assets/Editor/
 └─ DemoSceneBuilder.cs           씬·프리팹 생성 도구 (런타임에 포함되지 않음)

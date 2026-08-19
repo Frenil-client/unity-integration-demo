@@ -4,51 +4,53 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SquadDemo.UI
+namespace LobbyDemo.UI
 {
     /// <summary>
-    /// 스쿼드 화면의 View. unity-mvvm의 ViewBase를 그대로 쓴다
-    /// (SquadViewModel은 인자 없는 생성자를 가지므로 프레임워크의 기본 경로에 맞는다).
+    /// 로비 화면의 View. unity-mvvm의 ViewBase를 그대로 쓴다
+    /// (LobbyViewModel은 인자 없는 생성자를 가지므로 프레임워크의 기본 경로에 맞는다).
     ///
     /// 참조는 전부 Inspector에서 연결한다. 목록은 ListChange 델타로 받아 바뀐 슬롯만
-    /// 손대므로, 선수를 한 명 영입해도 기존 카드는 다시 만들어지지 않는다.
+    /// 손대므로, 캐릭터를 하나 소환해도 기존 카드는 다시 만들어지지 않는다.
     /// </summary>
-    public sealed class SquadView : ViewBase<SquadViewModel>
+    public sealed class LobbyView : ViewBase<LobbyViewModel>
     {
         [Header("Card List")]
         [SerializeField] private RectTransform _cardRoot;
-        [SerializeField] private PlayerCardView _cardPrefab;
+        [SerializeField] private HeroCardView _cardPrefab;
 
         [Header("Controls")]
-        [SerializeField] private Button _trainButton;
-        [SerializeField] private Button _signButton;
-        [SerializeField] private Button _claimButton;
+        [SerializeField] private Button _enhanceButton;
+        [SerializeField] private Button _summonButton;
+        [SerializeField] private Button _rewardButton;
+        [SerializeField] private Button _questButton;
 
         [Header("Output")]
         [SerializeField] private TextMeshProUGUI _logText;
-        [SerializeField] private ReportPopupView _reportPopup;
+        [SerializeField] private RewardPopupView _rewardPopup;
 
-        private readonly List<PlayerCardView> _cardViews = new List<PlayerCardView>();
+        private readonly List<HeroCardView> _cardViews = new List<HeroCardView>();
 
         /// <summary>레드닷 브리지가 구독할 수 있도록 ViewModel을 노출한다.</summary>
-        public SquadViewModel Model => ViewModel;
+        public LobbyViewModel Model => ViewModel;
 
-        protected override void Bind(SquadViewModel viewModel)
+        protected override void Bind(LobbyViewModel viewModel)
         {
             Subscribe(viewModel.Log, message => _logText.text = message);
-            Subscribe(viewModel.CanSign, canSign => _signButton.interactable = canSign);
+            Subscribe(viewModel.CanSummon, canSummon => _summonButton.interactable = canSummon);
             Subscribe(viewModel.Cards, OnCardsChanged);
 
-            _trainButton.onClick.AddListener(viewModel.TrainRandomPlayer);
-            _signButton.onClick.AddListener(viewModel.SignNextPlayer);
-            _claimButton.onClick.AddListener(viewModel.OpenTrainingReports);
+            _enhanceButton.onClick.AddListener(viewModel.EnhanceRandomHero);
+            _summonButton.onClick.AddListener(viewModel.SummonNextHero);
+            _rewardButton.onClick.AddListener(viewModel.OpenRewardPopup);
+            _questButton.onClick.AddListener(viewModel.ClaimDailyQuests);
 
             // 팝업은 같은 ViewModel을 공유한다. 생성자 인자가 필요한 ViewModel이 아니라
             // 이미 만들어진 것을 넘기는 것이므로 ViewBase의 제약과는 무관하다.
-            _reportPopup.Bind(viewModel);
+            _rewardPopup.Bind(viewModel);
         }
 
-        private void OnCardsChanged(ListChange<PlayerCardViewModel> change)
+        private void OnCardsChanged(ListChange<HeroCardViewModel> change)
         {
             switch (change.Type)
             {
@@ -70,7 +72,7 @@ namespace SquadDemo.UI
             }
         }
 
-        private void InsertCard(int index, PlayerCardViewModel cardViewModel)
+        private void InsertCard(int index, HeroCardViewModel cardViewModel)
         {
             var card = Instantiate(_cardPrefab, _cardRoot);
             card.Bind(cardViewModel);

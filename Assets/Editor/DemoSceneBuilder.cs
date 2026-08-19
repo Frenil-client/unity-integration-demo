@@ -1,8 +1,8 @@
 using System.IO;
 using RedDotSystem;
-using SquadDemo.Bootstrap;
-using SquadDemo.Glue;
-using SquadDemo.UI;
+using LobbyDemo.Bootstrap;
+using LobbyDemo.Glue;
+using LobbyDemo.UI;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -10,11 +10,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace SquadDemo.EditorTools
+namespace LobbyDemo.EditorTools
 {
     /// <summary>
     /// 데모 씬과 프리팹을 한 번에 만들어 주는 에디터 도구입니다.
-    /// (Tools ▸ Squad Demo ▸ 씬과 프리팹 생성)
+    /// (Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성)
     ///
     /// UI 조립 코드가 런타임에 남아 있으면 화면 구조를 바꿀 때마다 코드를 고쳐야 하고,
     /// Inspector에서 확인할 수도 없다. 그래서 조립은 에디터 시점에 한 번만 수행해
@@ -27,8 +27,8 @@ namespace SquadDemo.EditorTools
     {
         private const string PrefabFolder = "Assets/Prefabs";
         private const string SceneFolder = "Assets/Scenes";
-        private const string CardPrefabPath = PrefabFolder + "/PlayerCard.prefab";
-        private const string ScenePath = SceneFolder + "/SquadDemo.unity";
+        private const string CardPrefabPath = PrefabFolder + "/HeroCard.prefab";
+        private const string ScenePath = SceneFolder + "/LobbyDemo.unity";
 
         /// <summary>위쪽 헤더/버튼 영역이 시작되는 높이 비율. 위 30%가 조작부, 아래 70%가 목록이다.</summary>
         private const float TopSectionRatio = 0.7f;
@@ -38,7 +38,7 @@ namespace SquadDemo.EditorTools
         private static readonly Color Accent = new Color(0.20f, 0.55f, 0.95f);
         private static readonly Color DotColor = new Color(0.90f, 0.24f, 0.24f);
 
-        [MenuItem("Tools/Squad Demo/씬과 프리팹 생성")]
+        [MenuItem("Tools/Lobby Demo/씬과 프리팹 생성")]
         public static void Build()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -46,7 +46,7 @@ namespace SquadDemo.EditorTools
             EnsureFolder(PrefabFolder);
             EnsureFolder(SceneFolder);
 
-            var cardPrefab = BuildCardPrefab();
+            var cardPrefab = BuildHeroCardPrefab();
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             BuildScene(cardPrefab);
@@ -56,16 +56,16 @@ namespace SquadDemo.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[SquadDemo] 생성 완료 — {ScenePath} / {CardPrefabPath}");
-            EditorUtility.DisplayDialog("Squad Demo",
+            Debug.Log($"[LobbyDemo] 생성 완료 — {ScenePath} / {CardPrefabPath}");
+            EditorUtility.DisplayDialog("Lobby Demo",
                 $"씬과 프리팹을 만들었습니다.\n\n{ScenePath}\n{CardPrefabPath}\n\n씬을 열고 재생하세요.", "확인");
         }
 
-        // 선수 카드 프리팹 ---------------------------------------------------
+        // 캐릭터 카드 프리팹 -------------------------------------------------
 
-        private static PlayerCardView BuildCardPrefab()
+        private static HeroCardView BuildHeroCardPrefab()
         {
-            var root = Panel("PlayerCard", null, CardColor);
+            var root = Panel("HeroCard", null, CardColor);
             FixedHeight(root, 150f);
 
             var layout = root.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -76,40 +76,40 @@ namespace SquadDemo.EditorTools
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            var view = root.gameObject.AddComponent<PlayerCardView>();
+            var view = root.gameObject.AddComponent<HeroCardView>();
 
             var identity = Empty("Identity", root);
             VerticalLayout(identity, 4, 0);
             Flexible(identity, width: 1f);
             var nameText = Text("Name", identity, "-", 36f);
-            var overallText = Text("Overall", identity, "OVR -", 30f);
+            var combatPowerText = Text("CombatPower", identity, "전투력 -", 30f);
             PreferredHeight(nameText, 46f);
-            PreferredHeight(overallText, 38f);
+            PreferredHeight(combatPowerText, 38f);
 
-            var ratings = Empty("Ratings", root);
-            VerticalLayout(ratings, 2, 0);
-            Preferred(ratings, width: 200f);
-            var shooting = RatingText("Shooting", ratings);
-            var passing = RatingText("Passing", ratings);
-            var pace = RatingText("Pace", ratings);
-            var defending = RatingText("Defending", ratings);
+            var stats = Empty("Stats", root);
+            VerticalLayout(stats, 2, 0);
+            Preferred(stats, width: 220f);
+            var attack = StatText("Attack", stats);
+            var magic = StatText("Magic", stats);
+            var defense = StatText("Defense", stats);
+            var resistance = StatText("Resistance", stats);
 
             var so = new SerializedObject(view);
             so.FindProperty("_nameText").objectReferenceValue = nameText;
-            so.FindProperty("_overallText").objectReferenceValue = overallText;
-            so.FindProperty("_shootingText").objectReferenceValue = shooting;
-            so.FindProperty("_passingText").objectReferenceValue = passing;
-            so.FindProperty("_paceText").objectReferenceValue = pace;
-            so.FindProperty("_defendingText").objectReferenceValue = defending;
+            so.FindProperty("_combatPowerText").objectReferenceValue = combatPowerText;
+            so.FindProperty("_attackText").objectReferenceValue = attack;
+            so.FindProperty("_magicText").objectReferenceValue = magic;
+            so.FindProperty("_defenseText").objectReferenceValue = defense;
+            so.FindProperty("_resistanceText").objectReferenceValue = resistance;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root.gameObject, CardPrefabPath);
             Object.DestroyImmediate(root.gameObject);
 
-            return prefab.GetComponent<PlayerCardView>();
+            return prefab.GetComponent<HeroCardView>();
         }
 
-        private static TextMeshProUGUI RatingText(string name, Transform parent)
+        private static TextMeshProUGUI StatText(string name, Transform parent)
         {
             var text = Text(name, parent, "-", 26f, TextAlignmentOptions.Right);
             PreferredHeight(text, 28f);
@@ -118,7 +118,7 @@ namespace SquadDemo.EditorTools
 
         // 씬 ---------------------------------------------------------------
 
-        private static void BuildScene(PlayerCardView cardPrefab)
+        private static void BuildScene(HeroCardView cardPrefab)
         {
             if (Object.FindFirstObjectByType<EventSystem>() == null)
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
@@ -131,7 +131,7 @@ namespace SquadDemo.EditorTools
             var root = Panel("Root", canvas.transform, Background);
             Stretch(root);
 
-            // 화면을 비율로 자른다. 위 30%는 헤더/버튼/로그, 아래 70%는 선수 목록.
+            // 화면을 비율로 자른다. 위 30%는 헤더/버튼/로그, 아래 70%는 캐릭터 목록.
             // 픽셀 높이로 쌓으면 해상도나 종횡비가 바뀔 때 비율이 무너지므로 앵커로 나눈다.
             var topSection = Section("TopSection", root, bottom: TopSectionRatio, top: 1f);
             var listSection = Section("ListSection", root, bottom: 0f, top: TopSectionRatio);
@@ -145,62 +145,67 @@ namespace SquadDemo.EditorTools
             var header = Empty("Header", topSection);
             Weight(header, 1f, minHeight: 56f);
             HorizontalLayout(header, 12, 0);
-            var title = Text("Title", header, "SQUAD", 56f);
+            var title = Text("Title", header, "LOBBY", 56f);
             Flexible(title.rectTransform, width: 1f);
             BuildHeaderBadge(header);
 
             // 조작 버튼
             var buttonRow = Empty("Buttons", topSection);
             Weight(buttonRow, 1f, minHeight: 64f);
-            HorizontalLayout(buttonRow, 12, 0);
-            var trainButton = Button("TrainButton", buttonRow, "훈련");
-            var signButton = Button("SignButton", buttonRow, "영입");
-            var claimButton = Button("ClaimButton", buttonRow, "리포트 확인");
+            HorizontalLayout(buttonRow, 10, 0);
+            var enhanceButton = Button("EnhanceButton", buttonRow, "강화");
+            var summonButton = Button("SummonButton", buttonRow, "소환");
+            var rewardButton = Button("RewardButton", buttonRow, "보상");
+            var questButton = Button("QuestButton", buttonRow, "임무");
 
-            // 리프 노드의 알림은 해당 동작을 하는 버튼에 직접 붙인다.
-            AttachButtonBadge(signButton.GetComponent<RectTransform>(), SquadRedDotBridge.SigningsNode);
-            AttachButtonBadge(claimButton.GetComponent<RectTransform>(), SquadRedDotBridge.TrainingReportsNode);
+            // 알림은 그것을 처리하는 버튼에 직접 붙인다. 세 리프가 각각 다른 가지에 있으므로
+            // 헤더 배지(MainMenu)에는 세 가지의 합계가 트리를 타고 올라온다.
+            // 강화 버튼은 알림을 만드는 쪽이라 배지가 없다.
+            AttachButtonBadge(summonButton.GetComponent<RectTransform>(), LobbyRedDotBridge.SummonNode);
+            AttachButtonBadge(rewardButton.GetComponent<RectTransform>(), LobbyRedDotBridge.EnhanceReportNode);
+            AttachButtonBadge(questButton.GetComponent<RectTransform>(), LobbyRedDotBridge.DailyQuestNode);
 
             // 로그 - 버튼 바로 아래에 둔다. 피드백은 그 동작을 한 자리 가까이 있는 편이 낫고,
             // 아래 영역은 통째로 목록에 내주기 위해서이기도 하다.
             var logText = Text("Log", topSection, string.Empty, 30f);
             Weight(logText.rectTransform, 0.6f, minHeight: 36f);
 
-            // 카드 목록 - 아래 70%를 통째로 차지하고, 넘치면 스크롤된다
+            // 캐릭터 목록 - 아래 70%를 통째로 차지하고, 넘치면 스크롤된다
             var cardScroll = BuildScrollView("CardScrollView", listSection, out var cardRoot);
             Stretch(cardScroll);
             cardScroll.offsetMin = new Vector2(24f, 24f);
             cardScroll.offsetMax = new Vector2(-24f, 0f);
 
             // 팝업은 Root보다 뒤에 만들어야 위에 그려진다 (UGUI는 형제 순서가 곧 그리기 순서).
-            var reportPopup = BuildReportPopup(canvas.transform);
+            var rewardPopup = BuildRewardPopup(canvas.transform);
 
-            var view = canvas.gameObject.AddComponent<SquadView>();
+            var view = canvas.gameObject.AddComponent<LobbyView>();
             var so = new SerializedObject(view);
             so.FindProperty("_cardRoot").objectReferenceValue = cardRoot;
             so.FindProperty("_cardPrefab").objectReferenceValue = cardPrefab;
-            so.FindProperty("_trainButton").objectReferenceValue = trainButton;
-            so.FindProperty("_signButton").objectReferenceValue = signButton;
-            so.FindProperty("_claimButton").objectReferenceValue = claimButton;
+            so.FindProperty("_enhanceButton").objectReferenceValue = enhanceButton;
+            so.FindProperty("_summonButton").objectReferenceValue = summonButton;
+            so.FindProperty("_rewardButton").objectReferenceValue = rewardButton;
+            so.FindProperty("_questButton").objectReferenceValue = questButton;
             so.FindProperty("_logText").objectReferenceValue = logText;
-            so.FindProperty("_reportPopup").objectReferenceValue = reportPopup;
+            so.FindProperty("_rewardPopup").objectReferenceValue = rewardPopup;
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            var bootstrapGo = new GameObject("SquadDemoBootstrap");
-            var bootstrap = bootstrapGo.AddComponent<SquadDemoBootstrap>();
+            var bootstrapGo = new GameObject("LobbyDemoBootstrap");
+            var bootstrap = bootstrapGo.AddComponent<LobbyDemoBootstrap>();
             var bso = new SerializedObject(bootstrap);
-            bso.FindProperty("_squadView").objectReferenceValue = view;
+            bso.FindProperty("_lobbyView").objectReferenceValue = view;
             bso.ApplyModifiedPropertiesWithoutUndo();
 
         }
 
-        // 훈련 리포트 팝업. 컴포넌트는 항상 활성인 바깥 오브젝트에 두고, 실제로 켜고 끄는 것은
+        // 강화 리포트 팝업. 컴포넌트는 항상 활성인 바깥 오브젝트에 두고, 실제로 켜고 끄는 것은
         // 그 안의 Container다. 컴포넌트가 붙은 오브젝트를 직접 끄면 바인딩 시점이 꼬이기 쉽다.
-        private static ReportPopupView BuildReportPopup(Transform parent)
+        private static RewardPopupView BuildRewardPopup(Transform parent)
         {
-            var popupRoot = Empty("ReportPopup", parent);
+            var popupRoot = Empty("RewardPopup", parent);
             Stretch(popupRoot);
-            var popup = popupRoot.gameObject.AddComponent<ReportPopupView>();
+            var popup = popupRoot.gameObject.AddComponent<RewardPopupView>();
 
             var container = Empty("Container", popupRoot);
             Stretch(container);
@@ -225,7 +230,7 @@ namespace SquadDemo.EditorTools
             var titleBar = Empty("TitleBar", panel);
             FixedHeight(titleBar, 88f);
             HorizontalLayout(titleBar, 12, 0);
-            var popupTitle = Text("Title", titleBar, "훈련 리포트", 44f);
+            var popupTitle = Text("Title", titleBar, "강화 리포트", 44f);
             Flexible(popupTitle.rectTransform, width: 1f);
 
             var closeButton = Button("CloseButton", titleBar, "X");
@@ -292,13 +297,13 @@ namespace SquadDemo.EditorTools
             return scrollView;
         }
 
-        // 상단 합계 배지 - Character 노드는 CharacterLevelUp(훈련 리포트)과
-        // CharacterEquipment(영입)의 부모라, 두 알림의 합계가 트리에서 자동으로 올라온다.
+        // 상단 합계 배지 - MainMenu 노드는 Shop / Character / Quest 세 가지의
+        // 최상위 부모라, 세 알림의 합계가 트리에서 자동으로 올라온다.
         private static void BuildHeaderBadge(Transform parent)
         {
             var holder = Empty("Badge", parent);
             Preferred(holder, width: 96f);
-            CreateBadge(holder, SquadRedDotBridge.SummaryNode, new Vector2(1f, 0.5f), Vector2.zero, 72f);
+            CreateBadge(holder, LobbyRedDotBridge.SummaryNode, new Vector2(1f, 0.5f), Vector2.zero, 72f);
         }
 
         // 버튼 우상단에 붙는 알림 점. 어떤 버튼의 알림인지 한눈에 보이게 하는 것이 목적이다.

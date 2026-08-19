@@ -1,6 +1,6 @@
 {
-    "name": "SquadDemo",
-    "rootNamespace": "SquadDemo",
+    "name": "LobbyDemo",
+    "rootNamespace": "LobbyDemo",
     "references": [
         "Frenil.MVVM",
         "StatSystem",

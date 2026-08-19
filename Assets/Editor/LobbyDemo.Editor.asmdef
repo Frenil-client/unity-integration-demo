@@ -1,8 +1,8 @@
 {
-    "name": "SquadDemo.Editor",
-    "rootNamespace": "SquadDemo.EditorTools",
+    "name": "LobbyDemo.Editor",
+    "rootNamespace": "LobbyDemo.EditorTools",
     "references": [
-        "SquadDemo",
+        "LobbyDemo",
         "Frenil.MVVM",
         "StatSystem",
         "RedDotSystem",

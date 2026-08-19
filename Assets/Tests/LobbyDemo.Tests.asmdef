@@ -1,10 +1,10 @@
 {
-    "name": "SquadDemo.Tests",
-    "rootNamespace": "SquadDemo.Tests",
+    "name": "LobbyDemo.Tests",
+    "rootNamespace": "LobbyDemo.Tests",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "SquadDemo",
+        "LobbyDemo",
         "Frenil.MVVM",
         "StatSystem"
     ],

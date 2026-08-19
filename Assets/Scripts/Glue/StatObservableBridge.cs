@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Frenil.MVVM;
 using StatSystem;
 
-namespace SquadDemo.Glue
+namespace LobbyDemo.Glue
 {
     /// <summary>
     /// StatSystem의 <see cref="Stat.Changed"/>를 MVVM의 <see cref="Observable{T}"/>로 옮기는 어댑터.

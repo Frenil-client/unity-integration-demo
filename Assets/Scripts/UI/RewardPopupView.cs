@@ -5,10 +5,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SquadDemo.UI
+namespace LobbyDemo.UI
 {
     /// <summary>
-    /// 훈련 리포트 팝업. 열림 여부와 내용은 ViewModel이 정하고, 이 View는 그리기만 한다.
+    /// 강화 리포트 팝업. 열림 여부와 내용은 ViewModel이 정하고, 이 View는 그리기만 한다.
     ///
     /// 닫는 방법이 둘(X 버튼, 팝업 바깥 클릭)이지만 둘 다 ViewModel의 같은 메서드로 들어간다.
     /// 닫기 규칙이 View에 흩어지면 "어떤 경로로 닫으면 리포트가 안 지워진다" 같은 버그가 생긴다.
@@ -16,7 +16,7 @@ namespace SquadDemo.UI
     /// 바깥 클릭은 전체 화면을 덮는 딤 이미지에 Button을 달아 처리한다. 딤이 팝업 패널보다
     /// 뒤에 있으므로 패널 위를 눌렀을 때는 딤의 클릭이 발생하지 않는다.
     /// </summary>
-    public sealed class ReportPopupView : MonoBehaviour
+    public sealed class RewardPopupView : MonoBehaviour
     {
         [Tooltip("팝업 전체(딤 + 패널)를 담는 오브젝트. 열림/닫힘에 따라 켜고 끈다")]
         [SerializeField] private GameObject _container;
@@ -35,20 +35,20 @@ namespace SquadDemo.UI
         private readonly List<TextMeshProUGUI> _rows = new List<TextMeshProUGUI>();
         private readonly List<Action> _unbindActions = new List<Action>();
 
-        private SquadViewModel _viewModel;
+        private LobbyViewModel _viewModel;
 
-        public void Bind(SquadViewModel viewModel)
+        public void Bind(LobbyViewModel viewModel)
         {
             Unbind();
             _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
             _rowTemplate.gameObject.SetActive(false);
 
-            Subscribe(viewModel.IsReportPopupOpen, open => _container.SetActive(open));
+            Subscribe(viewModel.IsRewardPopupOpen, open => _container.SetActive(open));
             Subscribe(viewModel.Reports, OnReportsChanged);
 
-            _closeButton.onClick.AddListener(viewModel.CloseTrainingReports);
-            _dimmerButton.onClick.AddListener(viewModel.CloseTrainingReports);
+            _closeButton.onClick.AddListener(viewModel.CloseRewardPopup);
+            _dimmerButton.onClick.AddListener(viewModel.CloseRewardPopup);
         }
 
         public void Unbind()
