@@ -26,6 +26,7 @@ namespace SquadDemo.UI
 
         [Header("Output")]
         [SerializeField] private TextMeshProUGUI _logText;
+        [SerializeField] private ReportPopupView _reportPopup;
 
         private readonly List<PlayerCardView> _cardViews = new List<PlayerCardView>();
 
@@ -40,7 +41,11 @@ namespace SquadDemo.UI
 
             _trainButton.onClick.AddListener(viewModel.TrainRandomPlayer);
             _signButton.onClick.AddListener(viewModel.SignNextPlayer);
-            _claimButton.onClick.AddListener(viewModel.ClaimTrainingReports);
+            _claimButton.onClick.AddListener(viewModel.OpenTrainingReports);
+
+            // 팝업은 같은 ViewModel을 공유한다. 생성자 인자가 필요한 ViewModel이 아니라
+            // 이미 만들어진 것을 넘기는 것이므로 ViewBase의 제약과는 무관하다.
+            _reportPopup.Bind(viewModel);
         }
 
         private void OnCardsChanged(ListChange<PlayerCardViewModel> change)

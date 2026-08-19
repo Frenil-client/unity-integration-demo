@@ -53,18 +53,69 @@ namespace SquadDemo.Tests
         }
 
         [Test]
-        public void Training_AccumulatesUnreadReports_AndClaimingClearsThem()
+        public void Training_AccumulatesReports_AndUnreadCountTracksThem()
         {
             using var vm = new SquadViewModel();
 
             for (int i = 0; i < 5; i++)
                 vm.TrainRandomPlayer();
 
-            Assert.Greater(vm.UnreadReports.Value, 0);
+            Assert.Greater(vm.Reports.Count, 0);
+            Assert.AreEqual(vm.Reports.Count, vm.UnreadReports.Value);
+        }
 
-            vm.ClaimTrainingReports();
+        // 볼 것이 없으면 빈 팝업을 띄우지 않는다.
+        [Test]
+        public void OpenTrainingReports_WithNothingToRead_StaysClosed()
+        {
+            using var vm = new SquadViewModel();
 
+            vm.OpenTrainingReports();
+
+            Assert.IsFalse(vm.IsReportPopupOpen.Value);
+        }
+
+        // 여는 순간을 "확인"으로 본다 - 레드닷은 이때 꺼지고, 내용은 그대로 남아 있어야 한다.
+        [Test]
+        public void OpenTrainingReports_OpensAndClearsUnreadCount()
+        {
+            using var vm = new SquadViewModel();
+            for (int i = 0; i < 5; i++) vm.TrainRandomPlayer();
+            int reportCount = vm.Reports.Count;
+
+            vm.OpenTrainingReports();
+
+            Assert.IsTrue(vm.IsReportPopupOpen.Value);
             Assert.AreEqual(0, vm.UnreadReports.Value);
+            Assert.AreEqual(reportCount, vm.Reports.Count, "여는 것만으로 목록이 비면 안 된다");
+        }
+
+        [Test]
+        public void CloseTrainingReports_ClosesAndEmptiesTheList()
+        {
+            using var vm = new SquadViewModel();
+            for (int i = 0; i < 5; i++) vm.TrainRandomPlayer();
+            vm.OpenTrainingReports();
+
+            vm.CloseTrainingReports();
+
+            Assert.IsFalse(vm.IsReportPopupOpen.Value);
+            Assert.AreEqual(0, vm.Reports.Count);
+            Assert.AreEqual(0, vm.UnreadReports.Value);
+        }
+
+        // X 버튼과 바깥 클릭이 같은 경로로 들어오므로, 닫힌 상태에서 또 불려도 안전해야 한다.
+        [Test]
+        public void CloseTrainingReports_WhenAlreadyClosed_DoesNothing()
+        {
+            using var vm = new SquadViewModel();
+            for (int i = 0; i < 3; i++) vm.TrainRandomPlayer();
+            int reportCount = vm.Reports.Count;
+
+            vm.CloseTrainingReports();
+
+            Assert.AreEqual(reportCount, vm.Reports.Count);
+            Assert.AreEqual(reportCount, vm.UnreadReports.Value);
         }
 
         // Stat.Changed -> StatObservableBridge -> Observable 로 이어지는 경로.

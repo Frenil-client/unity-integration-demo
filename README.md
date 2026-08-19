@@ -120,7 +120,11 @@ UI는 아무 일도 하지 않고 로그만 "이미 최대치"로 바뀝니다. 
 새 슬롯만 생깁니다. 목록이 화면보다 길어지면 스크롤됩니다.
 유망주를 다 영입하면 점이 사라지고 버튼이 비활성화됩니다.
 
-**리포트 확인** — 훈련 리포트 수가 0이 되어 그 버튼의 점이 꺼집니다.
+**리포트 확인** — 쌓인 리포트를 팝업으로 보여줍니다. **여는 순간이 곧 확인**이라 그 버튼의 점이
+바로 꺼집니다. 팝업은 오른쪽 위 `X` 또는 **바깥 어두운 영역을 클릭**하면 닫히고, 닫을 때
+리포트 목록이 비워집니다. 닫는 방법이 둘이지만 ViewModel의 같은 메서드로 들어가므로
+"어떤 경로로 닫으면 목록이 안 지워진다" 같은 어긋남이 생기지 않습니다.
+볼 리포트가 없으면 팝업을 열지 않고 로그로만 알립니다.
 
 ### 레드닷이 어디에 붙어 있나
 
@@ -143,7 +147,7 @@ UI는 아무 일도 하지 않고 로그만 "이미 최대치"로 바뀝니다. 
 
 ## 테스트
 
-`Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All` — 10종.
+`Window ▸ General ▸ Test Runner ▸ EditMode ▸ Run All` — 14종.
 
 Canvas도 GameObject도 만들지 않고 흐름 전체를 검증합니다. 도메인과 ViewModel이 Unity에
 의존하지 않기 때문인데, unity-mvvm이 ViewModel을 MonoBehaviour로 만들지 않은 이유가 정확히 이것입니다.
@@ -188,7 +192,8 @@ Assets/Scripts/
 │  ├─ SquadViewModel.cs         목록·로그·미확인 수 (Unity 비의존)
 │  ├─ PlayerCardViewModel.cs    카드 하나의 파생 상태 (Unity 비의존)
 │  ├─ SquadView.cs              ViewBase 상속, ListChange 델타 처리
-│  └─ PlayerCardView.cs         카드 프리팹의 표시 담당
+│  ├─ PlayerCardView.cs         카드 프리팹의 표시 담당
+│  └─ ReportPopupView.cs       훈련 리포트 팝업 (X · 바깥 클릭으로 닫기)
 └─ Bootstrap/
    └─ SquadDemoBootstrap.cs     ViewModel과 레드닷 트리를 잇는 브리지 생성
 

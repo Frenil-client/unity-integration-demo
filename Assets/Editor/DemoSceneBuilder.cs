@@ -150,11 +150,14 @@ namespace SquadDemo.EditorTools
             AttachButtonBadge(claimButton.GetComponent<RectTransform>(), SquadRedDotBridge.TrainingReportsNode);
 
             // 카드 목록 - 남는 공간을 모두 차지하고, 넘치면 스크롤된다
-            var cardRoot = BuildCardScrollView(root);
+            var cardRoot = BuildScrollView("CardScrollView", root);
 
             // 로그
             var logText = Text("Log", root, string.Empty, 30f);
             PreferredHeight(logText, 64f);
+
+            // 팝업은 Root보다 뒤에 만들어야 위에 그려진다 (UGUI는 형제 순서가 곧 그리기 순서).
+            var reportPopup = BuildReportPopup(canvas.transform);
 
             var view = canvas.gameObject.AddComponent<SquadView>();
             var so = new SerializedObject(view);
@@ -164,6 +167,7 @@ namespace SquadDemo.EditorTools
             so.FindProperty("_signButton").objectReferenceValue = signButton;
             so.FindProperty("_claimButton").objectReferenceValue = claimButton;
             so.FindProperty("_logText").objectReferenceValue = logText;
+            so.FindProperty("_reportPopup").objectReferenceValue = reportPopup;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             var bootstrapGo = new GameObject("SquadDemoBootstrap");
@@ -174,12 +178,70 @@ namespace SquadDemo.EditorTools
 
         }
 
+        // 훈련 리포트 팝업. 컴포넌트는 항상 활성인 바깥 오브젝트에 두고, 실제로 켜고 끄는 것은
+        // 그 안의 Container다. 컴포넌트가 붙은 오브젝트를 직접 끄면 바인딩 시점이 꼬이기 쉽다.
+        private static ReportPopupView BuildReportPopup(Transform parent)
+        {
+            var popupRoot = Empty("ReportPopup", parent);
+            Stretch(popupRoot);
+            var popup = popupRoot.gameObject.AddComponent<ReportPopupView>();
+
+            var container = Empty("Container", popupRoot);
+            Stretch(container);
+
+            // 딤 - 화면 전체를 덮고, 클릭하면 닫힌다.
+            // 패널이 딤보다 뒤(위)에 그려지고 자체 Image로 레이캐스트를 막으므로
+            // 패널 위를 눌렀을 때는 딤의 클릭이 발생하지 않는다.
+            var dimmer = Panel("Dimmer", container, new Color(0f, 0f, 0f, 0.65f));
+            Stretch(dimmer);
+            var dimmerButton = dimmer.gameObject.AddComponent<Button>();
+            dimmerButton.targetGraphic = dimmer.GetComponent<Image>();
+            dimmerButton.transition = Selectable.Transition.None;
+
+            var panel = Panel("Panel", container, CardColor);
+            panel.anchorMin = new Vector2(0.5f, 0.5f);
+            panel.anchorMax = new Vector2(0.5f, 0.5f);
+            panel.pivot = new Vector2(0.5f, 0.5f);
+            panel.sizeDelta = new Vector2(880f, 1000f);
+            panel.anchoredPosition = Vector2.zero;
+            VerticalLayout(panel, 16, 24);
+
+            var titleBar = Empty("TitleBar", panel);
+            FixedHeight(titleBar, 88f);
+            HorizontalLayout(titleBar, 12, 0);
+            var popupTitle = Text("Title", titleBar, "훈련 리포트", 44f);
+            Flexible(popupTitle.rectTransform, width: 1f);
+
+            var closeButton = Button("CloseButton", titleBar, "X");
+            var closeRect = (RectTransform)closeButton.transform;
+            Element(closeRect).flexibleWidth = 0f;
+            Preferred(closeRect, width: 88f);
+
+            var listRoot = BuildScrollView("ReportScrollView", panel);
+
+            // 행 템플릿 - 목록 바깥에 비활성으로 두고 복제해서 쓴다.
+            var rowTemplate = Text("RowTemplate", container, "-", 30f);
+            PreferredHeight(rowTemplate, 46f);
+            rowTemplate.gameObject.SetActive(false);
+
+            var so = new SerializedObject(popup);
+            so.FindProperty("_container").objectReferenceValue = container.gameObject;
+            so.FindProperty("_closeButton").objectReferenceValue = closeButton;
+            so.FindProperty("_dimmerButton").objectReferenceValue = dimmerButton;
+            so.FindProperty("_listRoot").objectReferenceValue = listRoot;
+            so.FindProperty("_rowTemplate").objectReferenceValue = rowTemplate;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            container.gameObject.SetActive(false);
+            return popup;
+        }
+
         // 선수를 계속 영입하면 목록이 화면을 넘어간다. 스크롤 뷰가 없으면 넘친 카드를
         // 볼 수 없을 뿐 아니라, 목록이 아래쪽 로그까지 화면 밖으로 밀어내 버린다.
         // 그래서 목록은 스크롤 뷰 안에 넣고, 남는 세로 공간을 이 뷰가 흡수하게 한다.
-        private static RectTransform BuildCardScrollView(RectTransform parent)
+        private static RectTransform BuildScrollView(string name, RectTransform parent)
         {
-            var scrollView = Empty("CardScrollView", parent);
+            var scrollView = Empty(name, parent);
             FlexibleHeight(scrollView, 1f);
 
             var scroll = scrollView.gameObject.AddComponent<ScrollRect>();
