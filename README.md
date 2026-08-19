@@ -61,8 +61,8 @@
 {
   "dependencies": {
     "com.frenil.mvvm": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.0",
-    "com.frenil.stat-system": "https://github.com/Frenil-client/unity-stat-system.git#v2.0.0",
-    "com.frenil.reddot-system": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.0"
+    "com.frenil.stat-system": "https://github.com/Frenil-client/unity-stat-system.git#v2.0.1",
+    "com.frenil.reddot-system": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.1"
   }
 }
 ```
@@ -73,7 +73,7 @@
 
 ## 실행 방법
 
-1. Unity 2021.3 LTS로 이 프로젝트를 엽니다 (패키지는 manifest에서 자동으로 받아옵니다)
+1. Unity 6 (6000.3.9f1)로 이 프로젝트를 엽니다 (패키지는 manifest에서 자동으로 받아옵니다)
 2. TextMeshPro Essentials 임포트 창이 뜨면 **Import**를 누릅니다
 3. 새 씬을 만들고 빈 GameObject에 `SquadDemoBootstrap` 컴포넌트를 붙입니다
 4. 재생합니다
@@ -164,5 +164,5 @@ Assets/Scripts/
 
 ## 요구 사항
 
-- Unity 2021.3 LTS
-- TextMeshPro (manifest에 포함)
+- Unity 6 (6000.3.9f1) — `ProjectSettings/ProjectVersion.txt` 기준. 패키지 자체는 Unity 2021.3 이상에서 동작합니다
+- TextMeshPro — Unity 6에서는 `com.unity.ugui`에 포함되어 있습니다
