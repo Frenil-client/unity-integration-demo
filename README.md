@@ -75,13 +75,34 @@
 
 1. Unity 6 (6000.3.9f1)로 이 프로젝트를 엽니다 (패키지는 manifest에서 자동으로 받아옵니다)
 2. TextMeshPro Essentials 임포트 창이 뜨면 **Import**를 누릅니다
-3. 새 씬을 만들고 빈 GameObject에 `SquadDemoBootstrap` 컴포넌트를 붙입니다
-4. 재생합니다
+3. 한글 폰트를 준비합니다 — 아래 "한글 표시" 참고
+4. 메뉴에서 **Tools ▸ Squad Demo ▸ 씬과 프리팹 생성**을 실행합니다
+5. 만들어진 `Assets/Scenes/SquadDemo.unity`를 열고 재생합니다
 
-씬과 프리팹을 저장소에 넣지 않았습니다. 바이너리 에셋은 diff가 되지 않아 코드 리뷰로 확인할 수
-없고, 이 데모에서 봐야 할 것은 UI 꾸밈새가 아니라 세 패키지가 맞물리는 방식이기 때문입니다.
-화면은 [`SquadDemoBootstrap`](Assets/Scripts/Bootstrap/SquadDemoBootstrap.cs)이 실행 시 코드로 조립합니다.
-실제 프로젝트라면 당연히 프리팹을 씁니다.
+4번이 만드는 것은 두 가지입니다.
+
+- `Assets/Prefabs/PlayerCard.prefab` — 선수 카드 프리팹. `SquadView`가 목록 항목마다 하나씩 찍습니다
+- `Assets/Scenes/SquadDemo.unity` — 캔버스·버튼·레드닷 배지·`RedDotManager`가 배치되고
+  `SquadView`와 `SquadDemoBootstrap`의 참조가 전부 연결된 씬
+
+**UI 조립 코드는 런타임에 없습니다.** 예전에는 재생할 때마다 코드로 화면을 만들었는데, 그러면
+레이아웃을 바꿀 때마다 코드를 고쳐야 하고 Inspector에서 확인할 수도 없습니다. 조립은
+[`DemoSceneBuilder`](Assets/Editor/DemoSceneBuilder.cs)가 에디터에서 한 번만 수행해 프리팹과 씬으로
+굳히고, 런타임에는 프리팹을 찍어 쓰기만 합니다. 레이아웃을 손보고 싶으면 생성된 프리팹을 직접
+편집하는 편이 빠릅니다.
+
+이 덕분에 레드닷 아이콘도 패키지가 의도한 방식대로 쓰입니다 — `RedDotCountIcon`의 노드 타입을
+**Inspector 드롭다운에서 선택**하며, 이를 위한 별도 파생 클래스가 필요 없습니다.
+
+### 한글 표시
+
+TMP 기본 폰트(LiberationSans)에는 한글 글리프가 없어 텍스트가 □로 나옵니다. OFL 라이선스 한글 폰트
+(Noto Sans KR, Pretendard 등)를 `Assets/Fonts/`에 넣고 우클릭 ▸ **Create ▸ TextMeshPro ▸ Font Asset**으로
+폰트 에셋을 만든 뒤, 인스펙터에서 **Atlas Population Mode를 `Dynamic`으로** 바꿉니다. 한글은 완성형
+음절만 11,172자라 Static 아틀라스로는 감당이 안 됩니다.
+
+만든 에셋을 **Edit ▸ Project Settings ▸ TextMesh Pro ▸ Settings**의 `Default Font Asset`에 지정하면
+코드 수정 없이 모든 텍스트에 적용됩니다.
 
 ---
 
@@ -155,11 +176,14 @@ Assets/Scripts/
 │  ├─ SquadViewModel.cs         목록·로그·미확인 수 (Unity 비의존)
 │  ├─ PlayerCardViewModel.cs    카드 하나의 파생 상태 (Unity 비의존)
 │  ├─ SquadView.cs              ViewBase 상속, ListChange 델타 처리
-│  ├─ PlayerCardView.cs         카드 하나의 표시
-│  ├─ DemoRedDotBadge.cs        코드 조립용 RedDotCountIcon 파생
-│  └─ UiFactory.cs              UGUI 조립 헬퍼
+│  └─ PlayerCardView.cs         카드 프리팹의 표시 담당
 └─ Bootstrap/
-   └─ SquadDemoBootstrap.cs     진입점 — 매니저 기동, UI 조립, 브리지 연결
+   └─ SquadDemoBootstrap.cs     ViewModel과 레드닷 트리를 잇는 브리지 생성
+
+Assets/Editor/
+└─ DemoSceneBuilder.cs           씬·프리팹 생성 도구 (런타임에 포함되지 않음)
+
+Assets/Prefabs/  Assets/Scenes/  ← 위 도구가 생성
 ```
 
 ## 요구 사항

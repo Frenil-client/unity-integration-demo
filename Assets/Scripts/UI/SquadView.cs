@@ -10,35 +10,27 @@ namespace SquadDemo.UI
     /// 스쿼드 화면의 View. unity-mvvm의 ViewBase를 그대로 쓴다
     /// (SquadViewModel은 인자 없는 생성자를 가지므로 프레임워크의 기본 경로에 맞는다).
     ///
-    /// 목록은 ListChange 델타로 받아 바뀐 슬롯만 손댄다. 선수를 한 명 영입해도
-    /// 기존 카드들은 다시 만들어지지 않는다.
+    /// 참조는 전부 Inspector에서 연결한다. 목록은 ListChange 델타로 받아 바뀐 슬롯만
+    /// 손대므로, 선수를 한 명 영입해도 기존 카드는 다시 만들어지지 않는다.
     /// </summary>
     public sealed class SquadView : ViewBase<SquadViewModel>
     {
-        private readonly List<PlayerCardView> _cardViews = new List<PlayerCardView>();
+        [Header("Card List")]
+        [SerializeField] private RectTransform _cardRoot;
+        [SerializeField] private PlayerCardView _cardPrefab;
 
-        private RectTransform _cardRoot;
-        private TextMeshProUGUI _logText;
-        private Button _trainButton;
-        private Button _signButton;
-        private Button _claimButton;
+        [Header("Controls")]
+        [SerializeField] private Button _trainButton;
+        [SerializeField] private Button _signButton;
+        [SerializeField] private Button _claimButton;
+
+        [Header("Output")]
+        [SerializeField] private TextMeshProUGUI _logText;
+
+        private readonly List<PlayerCardView> _cardViews = new List<PlayerCardView>();
 
         /// <summary>레드닷 브리지가 구독할 수 있도록 ViewModel을 노출한다.</summary>
         public SquadViewModel Model => ViewModel;
-
-        /// <summary>
-        /// UI 참조를 주입한다. GameObject가 비활성인 동안 호출해야 한다
-        /// (활성화 시점에 Awake가 돌면서 Bind가 이 참조들을 사용한다).
-        /// </summary>
-        public void Configure(RectTransform cardRoot, TextMeshProUGUI logText,
-                              Button trainButton, Button signButton, Button claimButton)
-        {
-            _cardRoot = cardRoot;
-            _logText = logText;
-            _trainButton = trainButton;
-            _signButton = signButton;
-            _claimButton = claimButton;
-        }
 
         protected override void Bind(SquadViewModel viewModel)
         {
@@ -75,7 +67,7 @@ namespace SquadDemo.UI
 
         private void InsertCard(int index, PlayerCardViewModel cardViewModel)
         {
-            var card = PlayerCardView.Create(_cardRoot);
+            var card = Instantiate(_cardPrefab, _cardRoot);
             card.Bind(cardViewModel);
             card.transform.SetSiblingIndex(index);
             _cardViews.Insert(index, card);

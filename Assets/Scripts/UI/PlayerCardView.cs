@@ -9,7 +9,7 @@ using UnityEngine;
 namespace SquadDemo.UI
 {
     /// <summary>
-    /// 선수 카드 하나의 View.
+    /// 선수 카드 하나의 View. 프리팹으로 만들어 두고 SquadView가 목록 항목마다 하나씩 찍는다.
     ///
     /// ViewBase&lt;T&gt;를 쓰지 않은 이유: 제약이 <c>where TViewModel : ViewModelBase, new()</c>이라
     /// 생성자 인자가 필요한 ViewModel(여기서는 SquadPlayer를 받는다)은 아예 타입 인자로
@@ -19,59 +19,41 @@ namespace SquadDemo.UI
     /// </summary>
     public sealed class PlayerCardView : MonoBehaviour
     {
-        private readonly List<Action> _unbindActions = new List<Action>();
-        private readonly Dictionary<StatId, TextMeshProUGUI> _statTexts =
-            new Dictionary<StatId, TextMeshProUGUI>();
+        [Header("Identity")]
+        [SerializeField] private TextMeshProUGUI _nameText;
+        [SerializeField] private TextMeshProUGUI _overallText;
 
-        private TextMeshProUGUI _nameText;
-        private TextMeshProUGUI _overallText;
+        [Header("Ratings")]
+        [SerializeField] private TextMeshProUGUI _shootingText;
+        [SerializeField] private TextMeshProUGUI _passingText;
+        [SerializeField] private TextMeshProUGUI _paceText;
+        [SerializeField] private TextMeshProUGUI _defendingText;
+
+        [Header("Colors")]
+        [SerializeField] private Color _normalColor = Color.white;
+        [SerializeField] private Color _maxedColor = new Color(0.20f, 0.55f, 0.95f);
+
+        private readonly List<Action> _unbindActions = new List<Action>();
 
         /// <summary>현재 이 카드가 표시 중인 ViewModel. 바인딩 전이면 null.</summary>
         public PlayerCardViewModel ViewModel { get; private set; }
-
-        public static PlayerCardView Create(Transform parent)
-        {
-            var rect = UiFactory.Panel("PlayerCard", parent, UiFactory.CardColor);
-            rect.gameObject.SetActive(false);
-
-            UiFactory.FixedHeight(rect, 132f);
-            UiFactory.HorizontalLayout(rect, 12, 16);
-
-            var view = rect.gameObject.AddComponent<PlayerCardView>();
-
-            var left = UiFactory.Empty("Identity", rect);
-            UiFactory.VerticalLayout(left, 4, 0);
-            view._nameText = UiFactory.Text("Name", left, "-", 34f);
-            view._overallText = UiFactory.Text("Overall", left, "OVR -", 28f);
-
-            var right = UiFactory.Empty("Ratings", rect);
-            UiFactory.VerticalLayout(right, 2, 0);
-            foreach (var id in SquadPlayer.RatedStatIds)
-                view._statTexts[id] = UiFactory.Text(id.ToString(), right, "-", 24f,
-                    TextAlignmentOptions.Right);
-
-            rect.gameObject.SetActive(true);
-            return view;
-        }
 
         public void Bind(PlayerCardViewModel viewModel)
         {
             Unbind();
             ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
-            _nameText.text = $"{viewModel.Name}  <size=24>{viewModel.PositionLabel}</size>";
+            _nameText.text = $"{viewModel.Name}  <size=70%>{viewModel.PositionLabel}</size>";
 
             Subscribe(viewModel.Overall, overall => _overallText.text = $"OVR {overall}");
 
             Subscribe(viewModel.MaxedOut, maxed =>
-                _overallText.color = maxed ? UiFactory.Accent : Color.white);
+                _overallText.color = maxed ? _maxedColor : _normalColor);
 
-            foreach (var pair in _statTexts)
-            {
-                var label = SquadPlayer.DisplayName(pair.Key);
-                var target = pair.Value;
-                Subscribe(viewModel.RatingOf(pair.Key), rating => target.text = $"{label} {rating}");
-            }
+            BindRating(viewModel, SquadPlayer.Shooting, _shootingText);
+            BindRating(viewModel, SquadPlayer.Passing, _passingText);
+            BindRating(viewModel, SquadPlayer.Pace, _paceText);
+            BindRating(viewModel, SquadPlayer.Defending, _defendingText);
         }
 
         public void Unbind()
@@ -81,6 +63,14 @@ namespace SquadDemo.UI
 
             _unbindActions.Clear();
             ViewModel = null;
+        }
+
+        private void BindRating(PlayerCardViewModel viewModel, StatId id, TextMeshProUGUI target)
+        {
+            if (target == null) return;
+
+            string label = SquadPlayer.DisplayName(id);
+            Subscribe(viewModel.RatingOf(id), rating => target.text = $"{label} {rating}");
         }
 
         // ViewBase.Subscribe와 같은 규칙 - 구독 즉시 현재 값으로 1회 동기화하고,

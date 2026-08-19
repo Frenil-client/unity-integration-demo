@@ -1,11 +1,11 @@
 {
   "dependencies": {
     "com.frenil.mvvm": {
-      "version": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.0",
+      "version": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.1",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d0db719aeb1a4eb224783fff2724de23ca7f6184"
+      "hash": "32c0aeb42651bf8e3ddfccd6d38f4601feb90930"
     },
     "com.frenil.reddot-system": {
       "version": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.1",

@@ -1,0 +1,22 @@
+{
+    "name": "SquadDemo.Editor",
+    "rootNamespace": "SquadDemo.EditorTools",
+    "references": [
+        "SquadDemo",
+        "Frenil.MVVM",
+        "StatSystem",
+        "RedDotSystem",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
