@@ -1,4 +1,3 @@
-using RedDotSystem;
 using SquadDemo.Glue;
 using SquadDemo.UI;
 using UnityEngine;
@@ -27,12 +26,6 @@ namespace SquadDemo.Bootstrap
             if (_squadView == null)
             {
                 Debug.LogError("[SquadDemo] SquadView가 연결되지 않았습니다.", this);
-                return;
-            }
-
-            if (RedDotManager.Instance == null)
-            {
-                Debug.LogError("[SquadDemo] 씬에 RedDotManager가 없습니다. 레드닷 배지가 동작하지 않습니다.", this);
                 return;
             }
 

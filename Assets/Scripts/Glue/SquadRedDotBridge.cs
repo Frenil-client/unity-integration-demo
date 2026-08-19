@@ -54,12 +54,10 @@ namespace SquadDemo.Glue
 
         private static void SetCount(RedDotType type, int count)
         {
-            var manager = RedDotManager.Instance;
-            if (manager == null) return;
-
             // 리프에만 값을 넣는다. 부모(Character)와 그 위(MainMenu)의 합계는
             // RedDotNode가 델타로 알아서 굴려 올린다.
-            manager.SetCount(type, count);
+            // RedDotTree는 첫 접근에 스스로 구성되므로 씬에 매니저가 없어도 동작한다.
+            RedDotTree.SetCount(type, count);
         }
 
         public void Dispose()
