@@ -66,7 +66,7 @@
 ```json
 {
   "dependencies": {
-    "com.frenil.mvvm": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.1",
+    "com.frenil.mvvm": "https://github.com/Frenil-client/unity-mvvm.git#v1.2.0",
     "com.frenil.stat-system": "https://github.com/Frenil-client/unity-stat-system.git#v3.0.0",
     "com.frenil.reddot-system": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.2"
   }
@@ -203,8 +203,8 @@ Canvas도 GameObject도 만들지 않고 흐름 전체를 검증합니다. 도�
 
 ## 이 데모가 드러낸 것
 
-패키지만 만들고 끝냈으면 못 찾았을 문제들이 통합 과정에서 나왔습니다. 데모의 목적 중 하나가
-이런 걸 찾는 것이라 감추지 않고 적어 둡니다.
+패키지만 만들고 끝냈으면 못 찾았을 문제 셋이 통합 과정에서 나왔고, 모두 패키지 쪽을 고쳐
+해결했습니다. 데모의 목적 중 하나가 이런 걸 찾는 것이라 과정을 그대로 적어 둡니다.
 
 **1. `.meta` 파일 누락** (해결) — stat/reddot 패키지에 `.meta`가 하나도 없어, git URL로 설치하면
 Unity가 immutable 폴더에 meta를 만들지 못해 **에셋 전체가 무시**됐습니다. asmdef도 임포트되지 않아
@@ -215,11 +215,17 @@ Unity가 immutable 폴더에 meta를 만들지 못해 **에셋 전체가 무시*
 아이콘이 어떤 노드에도 연결되지 못한 채 죽었습니다. 트리를 첫 접근 시 스스로 구성하는
 `RedDotTree`로 옮겨 순서라는 개념 자체를 없앴습니다.
 
-**3. `ViewBase<T>`가 ViewModel 주입을 지원하지 않는다** (미해결) — 제약이
-`where TViewModel : ViewModelBase, new()`라, 생성자 인자가 필요한 ViewModel은 타입 인자로
-넣는 것조차 불가능합니다. 그래서 [`HeroCardView`](Assets/Scripts/UI/HeroCardView.cs)는
-`ViewBase`를 쓰지 못하고 `Bind`/`Unbind`를 직접 관리합니다. unity-mvvm에서 주입을 1급으로
-다루도록 고칠 지점입니다.
+**3. `ViewBase<T>`가 ViewModel 주입을 지원하지 않았다** (해결) — 제약이
+`where TViewModel : ViewModelBase, new()`라, 생성자로 `Hero`를 받는 `HeroCardViewModel`은
+타입 인자로 넣는 것조차 불가능했습니다. 목록 바인딩(`ObservableList`)은 정식 기능인데
+정작 목록 **항목**의 View가 프레임워크 밖에 있는 상태였죠.
+
+unity-mvvm에 `InjectableViewBase<T>`를 추가해 해결했습니다. `new()` 제약 없이 바깥에서
+`Initialize(viewModel)`로 붙이고, 다시 호출하면 이전 구독을 먼저 풉니다.
+`ViewBase<T>`가 그것을 상속하는 구조라 기존 코드는 그대로 동작합니다.
+[`HeroCardView`](Assets/Scripts/UI/HeroCardView.cs)와
+[`RewardPopupView`](Assets/Scripts/UI/RewardPopupView.cs)가 이제 프레임워크의 구독 수명
+관리를 그대로 쓰며, 직접 짜던 `Bind`/`Unbind` 배관이 사라졌습니다.
 
 ---
 

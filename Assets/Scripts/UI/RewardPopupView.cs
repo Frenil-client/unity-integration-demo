@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Frenil.MVVM;
 using TMPro;
@@ -10,13 +9,16 @@ namespace LobbyDemo.UI
     /// <summary>
     /// 강화 리포트 팝업. 열림 여부와 내용은 ViewModel이 정하고, 이 View는 그리기만 한다.
     ///
+    /// LobbyView와 **같은 ViewModel을 공유**하므로 주입받는다. 소유하지 않으므로
+    /// (기본값 takeOwnership: false) 팝업이 파괴돼도 ViewModel은 살아 있고, 구독만 풀린다.
+    ///
     /// 닫는 방법이 둘(X 버튼, 팝업 바깥 클릭)이지만 둘 다 ViewModel의 같은 메서드로 들어간다.
     /// 닫기 규칙이 View에 흩어지면 "어떤 경로로 닫으면 리포트가 안 지워진다" 같은 버그가 생긴다.
     ///
     /// 바깥 클릭은 전체 화면을 덮는 딤 이미지에 Button을 달아 처리한다. 딤이 팝업 패널보다
     /// 뒤에 있으므로 패널 위를 눌렀을 때는 딤의 클릭이 발생하지 않는다.
     /// </summary>
-    public sealed class RewardPopupView : MonoBehaviour
+    public sealed class RewardPopupView : InjectableViewBase<LobbyViewModel>
     {
         [Tooltip("팝업 전체(딤 + 패널)를 담는 오브젝트. 열림/닫힘에 따라 켜고 끈다")]
         [SerializeField] private GameObject _container;
@@ -33,35 +35,25 @@ namespace LobbyDemo.UI
         [SerializeField] private TextMeshProUGUI _rowTemplate;
 
         private readonly List<TextMeshProUGUI> _rows = new List<TextMeshProUGUI>();
-        private readonly List<Action> _unbindActions = new List<Action>();
 
-        private LobbyViewModel _viewModel;
-
-        public void Bind(LobbyViewModel viewModel)
+        protected override void Bind(LobbyViewModel viewModel)
         {
-            Unbind();
-            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
-
             _rowTemplate.gameObject.SetActive(false);
 
             Subscribe(viewModel.IsRewardPopupOpen, open => _container.SetActive(open));
             Subscribe(viewModel.Reports, OnReportsChanged);
 
+            // 리스너도 구독과 같은 수명에 묶어 둔다. 재주입 시 겹쳐 쌓이지 않는다.
             _closeButton.onClick.AddListener(viewModel.CloseRewardPopup);
             _dimmerButton.onClick.AddListener(viewModel.CloseRewardPopup);
-        }
+            RegisterUnbind(() =>
+            {
+                _closeButton.onClick.RemoveListener(viewModel.CloseRewardPopup);
+                _dimmerButton.onClick.RemoveListener(viewModel.CloseRewardPopup);
+            });
 
-        public void Unbind()
-        {
-            foreach (var unbind in _unbindActions)
-                unbind?.Invoke();
-
-            _unbindActions.Clear();
-
-            if (_closeButton != null) _closeButton.onClick.RemoveAllListeners();
-            if (_dimmerButton != null) _dimmerButton.onClick.RemoveAllListeners();
-
-            _viewModel = null;
+            // 남아 있던 행이 있으면 정리한다 (재주입 대비).
+            RegisterUnbind(ClearRows);
         }
 
         private void OnReportsChanged(ListChange<string> change)
@@ -102,33 +94,21 @@ namespace LobbyDemo.UI
             Destroy(row.gameObject);
         }
 
-        private void RebuildAll()
+        private void ClearRows()
         {
             for (int i = _rows.Count - 1; i >= 0; i--)
                 RemoveRow(i);
+        }
 
-            if (_viewModel == null) return;
+        private void RebuildAll()
+        {
+            ClearRows();
 
-            var reports = _viewModel.Reports;
+            if (ViewModel == null) return;
+
+            var reports = ViewModel.Reports;
             for (int i = 0; i < reports.Count; i++)
                 InsertRow(i, reports[i]);
         }
-
-        // ViewBase.Subscribe와 같은 규칙 - 구독 즉시 현재 상태로 1회 동기화한다.
-        private void Subscribe<T>(IReadOnlyObservable<T> observable, Action<T> handler)
-        {
-            observable.OnChanged += handler;
-            _unbindActions.Add(() => observable.OnChanged -= handler);
-            handler(observable.Value);
-        }
-
-        private void Subscribe<T>(IReadOnlyObservableList<T> list, Action<ListChange<T>> handler)
-        {
-            list.OnChanged += handler;
-            _unbindActions.Add(() => list.OnChanged -= handler);
-            handler(ListChange<T>.Reset());
-        }
-
-        private void OnDestroy() => Unbind();
     }
 }

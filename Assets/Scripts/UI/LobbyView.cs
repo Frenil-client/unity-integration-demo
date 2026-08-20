@@ -45,9 +45,18 @@ namespace LobbyDemo.UI
             _rewardButton.onClick.AddListener(viewModel.OpenRewardPopup);
             _questButton.onClick.AddListener(viewModel.ClaimDailyQuests);
 
-            // 팝업은 같은 ViewModel을 공유한다. 생성자 인자가 필요한 ViewModel이 아니라
-            // 이미 만들어진 것을 넘기는 것이므로 ViewBase의 제약과는 무관하다.
-            _rewardPopup.Bind(viewModel);
+            // 리스너도 구독과 같은 수명에 묶는다.
+            RegisterUnbind(() =>
+            {
+                _enhanceButton.onClick.RemoveListener(viewModel.EnhanceRandomHero);
+                _summonButton.onClick.RemoveListener(viewModel.SummonNextHero);
+                _rewardButton.onClick.RemoveListener(viewModel.OpenRewardPopup);
+                _questButton.onClick.RemoveListener(viewModel.ClaimDailyQuests);
+            });
+
+            // 팝업은 같은 ViewModel을 공유한다. 소유하지 않으므로 팝업이 사라져도
+            // ViewModel은 이 View의 것으로 남는다.
+            _rewardPopup.Initialize(viewModel);
         }
 
         private void OnCardsChanged(ListChange<HeroCardViewModel> change)
@@ -63,7 +72,7 @@ namespace LobbyDemo.UI
                     break;
 
                 case ListChangeType.Replaced:
-                    _cardViews[change.Index].Bind(change.NewItem);
+                    _cardViews[change.Index].Initialize(change.NewItem);
                     break;
 
                 default:
@@ -75,7 +84,7 @@ namespace LobbyDemo.UI
         private void InsertCard(int index, HeroCardViewModel cardViewModel)
         {
             var card = Instantiate(_cardPrefab, _cardRoot);
-            card.Bind(cardViewModel);
+            card.Initialize(cardViewModel);
             card.transform.SetSiblingIndex(index);
             _cardViews.Insert(index, card);
         }
@@ -85,7 +94,7 @@ namespace LobbyDemo.UI
             var card = _cardViews[index];
             _cardViews.RemoveAt(index);
 
-            card.Unbind();
+            card.Release();
             Destroy(card.gameObject);
         }
 
@@ -106,7 +115,7 @@ namespace LobbyDemo.UI
 
             foreach (var card in _cardViews)
             {
-                if (card != null) card.Unbind();
+                if (card != null) card.Release();
             }
 
             _cardViews.Clear();
