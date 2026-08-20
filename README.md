@@ -81,20 +81,27 @@
 
 1. Unity 6 (6000.3.9f1)로 이 프로젝트를 엽니다 (패키지는 manifest에서 자동으로 받아옵니다)
 2. TextMeshPro Essentials 임포트 창이 뜨면 **Import**를 누릅니다
-3. 메뉴에서 **Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성**을 실행합니다
-4. 만들어진 `Assets/Scenes/LobbyDemo.unity`를 열고 재생합니다
+3. `Assets/Scenes/LobbyDemo.unity` 를 열고 재생합니다
 
-3번이 만드는 것은 두 가지입니다.
+씬과 프리팹은 저장소에 들어 있으므로 별도 준비 없이 바로 돌아갑니다.
 
-- `Assets/Prefabs/HeroCard.prefab` — 캐릭터 카드 프리팹. `LobbyView`가 목록 항목마다 하나씩 찍습니다
-- `Assets/Scenes/LobbyDemo.unity` — 캔버스·버튼·레드닷 배지·팝업이 배치되고
-  `LobbyView`와 `LobbyDemoBootstrap`의 참조가 전부 연결된 씬
+### 화면은 에디터 도구가 만든 것입니다
+
+`Assets/Scenes/LobbyDemo.unity`와 `Assets/Prefabs/HeroCard.prefab`은 손으로 배치한 것이 아니라
+[`DemoSceneBuilder`](Assets/Editor/DemoSceneBuilder.cs)가 만든 결과물입니다.
+
+```
+Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성
+```
+
+실행에는 필요 없고, **화면 구조를 바꾸고 싶을 때** 쓰는 도구입니다. 캔버스 계층, 레이아웃 비율,
+레드닷 배지 배치, `LobbyView`와 `LobbyDemoBootstrap`의 참조 연결까지 전부 코드로 기술되어 있어
+구조 변경이 diff로 남습니다. 실행하면 기존 씬과 프리팹을 덮어씁니다.
 
 **UI 조립 코드는 런타임에 없습니다.** 예전에는 재생할 때마다 코드로 화면을 만들었는데, 그러면
-레이아웃을 바꿀 때마다 코드를 고쳐야 하고 Inspector에서 확인할 수도 없습니다. 조립은
-[`DemoSceneBuilder`](Assets/Editor/DemoSceneBuilder.cs)가 에디터에서 한 번만 수행해 프리팹과 씬으로
-굳히고, 런타임에는 프리팹을 찍어 쓰기만 합니다. 레이아웃을 손보고 싶으면 생성된 프리팹을 직접
-편집하는 편이 빠릅니다.
+레이아웃을 바꿀 때마다 코드를 고쳐야 하고 Inspector에서 확인할 수도 없습니다. 조립을 에디터
+시점으로 옮겨 프리팹과 씬으로 굳히고, 런타임에는 프리팹을 찍어 쓰기만 합니다. 사소한 조정은
+생성된 프리팹을 직접 편집하는 편이 빠릅니다.
 
 이 덕분에 레드닷 아이콘도 패키지가 의도한 방식대로 쓰입니다 — `RedDotCountIcon`의 노드 타입을
 **Inspector 드롭다운에서 선택**하며, 이를 위한 별도 파생 클래스가 필요 없습니다.
@@ -238,7 +245,7 @@ Assets/Scripts/
 Assets/Editor/
 └─ DemoSceneBuilder.cs           씬·프리팹 생성 도구 (런타임에 포함되지 않음)
 
-Assets/Prefabs/  Assets/Scenes/  ← 위 도구가 생성
+Assets/Prefabs/  Assets/Scenes/  ← 위 도구가 생성한 결과물 (저장소에 포함)
 ```
 
 ## 요구 사항
