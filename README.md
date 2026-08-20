@@ -85,27 +85,6 @@
 
 씬과 프리팹은 저장소에 들어 있으므로 별도 준비 없이 바로 돌아갑니다.
 
-### 화면은 에디터 도구가 만든 것입니다
-
-`Assets/Scenes/LobbyDemo.unity`와 `Assets/Prefabs/HeroCard.prefab`은 손으로 배치한 것이 아니라
-[`DemoSceneBuilder`](Assets/Editor/DemoSceneBuilder.cs)가 만든 결과물입니다.
-
-```
-Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성
-```
-
-실행에는 필요 없고, **화면 구조를 바꾸고 싶을 때** 쓰는 도구입니다. 캔버스 계층, 레이아웃 비율,
-레드닷 배지 배치, `LobbyView`와 `LobbyDemoBootstrap`의 참조 연결까지 전부 코드로 기술되어 있어
-구조 변경이 diff로 남습니다. 실행하면 기존 씬과 프리팹을 덮어씁니다.
-
-**UI 조립 코드는 런타임에 없습니다.** 예전에는 재생할 때마다 코드로 화면을 만들었는데, 그러면
-레이아웃을 바꿀 때마다 코드를 고쳐야 하고 Inspector에서 확인할 수도 없습니다. 조립을 에디터
-시점으로 옮겨 프리팹과 씬으로 굳히고, 런타임에는 프리팹을 찍어 쓰기만 합니다. 사소한 조정은
-생성된 프리팹을 직접 편집하는 편이 빠릅니다.
-
-이 덕분에 레드닷 아이콘도 패키지가 의도한 방식대로 쓰입니다 — `RedDotCountIcon`의 노드 타입을
-**Inspector 드롭다운에서 선택**하며, 이를 위한 별도 파생 클래스가 필요 없습니다.
-
 ### 화면 비율
 
 `CanvasScaler`는 **너비 기준(match 0)** 으로 맞춥니다. 가로 폭이 항상 1080 단위로 고정되어
@@ -129,7 +108,7 @@ Tools ▸ Lobby Demo ▸ 씬과 프리팹 생성
 가중치로 남는 높이를 나눠 갖습니다. 고정 픽셀 높이를 주면 30%가 그보다 작아지는
 종횡비에서 내용이 영역 밖으로 넘칩니다.
 
-비율을 바꾸려면 `DemoSceneBuilder.TopSectionRatio` 상수 하나만 고치면 됩니다.
+비율을 바꾸려면 씬의 `TopSection` / `ListSection` 앵커를 조정하면 됩니다.
 
 ### 한글 표시
 
@@ -266,14 +245,11 @@ Assets/Scripts/
 │  ├─ HeroCardViewModel.cs      카드 하나의 파생 상태 (Unity 비의존)
 │  ├─ LobbyView.cs              ViewBase 상속, ListChange 델타 처리
 │  ├─ HeroCardView.cs           카드 프리팹의 표시 담당
-│  └─ RewardPopupView.cs        강화 리포트 팝업 (X · 바깥 클릭으로 닫기)
+│  └─ RewardPopupView.cs        보상 팝업 (X · 바깥 클릭으로 닫기)
 └─ Bootstrap/
    └─ LobbyDemoBootstrap.cs     ViewModel과 레드닷 트리를 잇는 브리지 생성
 
-Assets/Editor/
-└─ DemoSceneBuilder.cs           씬·프리팹 생성 도구 (런타임에 포함되지 않음)
-
-Assets/Prefabs/  Assets/Scenes/  ← 위 도구가 생성한 결과물 (저장소에 포함)
+Assets/Prefabs/  Assets/Scenes/   캔버스·카드·팝업 (저장소에 포함)
 ```
 
 ## 요구 사항

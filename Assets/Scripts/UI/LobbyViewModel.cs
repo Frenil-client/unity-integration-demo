@@ -102,13 +102,13 @@ namespace LobbyDemo.UI
         {
             if (_reports.Count == 0)
             {
-                _log.Value = "확인할 보상 기록이 없습니다.";
+                _log.Value = "확인할 보상이 없습니다.";
                 return;
             }
 
             _isRewardPopupOpen.Value = true;
             _unreadRewards.Value = 0;
-            _log.Value = $"보상 기록 {_reports.Count}건을 확인하는 중입니다.";
+            _log.Value = $"보상 {_reports.Count}건을 확인하는 중입니다.";
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace LobbyDemo.UI
             // 목록을 비우기 전에 먼저 닫아, 팝업이 사라지는 순간에 행이 지워지는 것이 보이지 않게 한다.
             _isRewardPopupOpen.Value = false;
             _reports.Clear();
-            _log.Value = $"보상 기록 {count}건을 확인했습니다.";
+            _log.Value = $"보상 {count}건을 확인했습니다.";
         }
 
         /// <summary>
