@@ -45,10 +45,10 @@ namespace LobbyDemo.Domain
             foreach (var id in Rated)
                 Stats.SetMaxValue(id, (long)MaxStat);
 
-            Stats.SetValue(StatId.AttackPower,       (long)attack);
-            Stats.SetValue(StatId.MagicAttack,       (long)magic);
-            Stats.SetValue(StatId.Defense,           (long)defense);
-            Stats.SetValue(StatId.StatusResistance,  (long)resistance);
+            Stats.SetBaseValue(StatId.AttackPower,       (long)attack);
+            Stats.SetBaseValue(StatId.MagicAttack,       (long)magic);
+            Stats.SetBaseValue(StatId.Defense,           (long)defense);
+            Stats.SetBaseValue(StatId.StatusResistance,  (long)resistance);
         }
 
         /// <summary>전투력. 네 능력치의 합이며 카드에 표시된다.</summary>
@@ -74,7 +74,7 @@ namespace LobbyDemo.Domain
         public bool Enhance(StatId id, int amount)
         {
             int before = ValueOf(id);
-            Stats.AddValue(id, (long)amount);
+            Stats.AddBaseValue(id, (long)amount);
             return ValueOf(id) != before;
         }
 
