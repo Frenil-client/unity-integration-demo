@@ -18,7 +18,7 @@ namespace LobbyDemo.Glue
     ///
     ///   MainMenu          헤더 배지 (합계)
     ///   ├─ Shop           └ ShopPackage      남은 소환권
-    ///   ├─ Character      └ CharacterLevelUp 미확인 강화 리포트
+    ///   ├─ Character      └ CharacterLevelUp 미확인 보상 기록
     ///   └─ Quest          └ QuestDaily       완료된 일일 임무
     /// </summary>
     public sealed class LobbyRedDotBridge : IDisposable
@@ -26,8 +26,8 @@ namespace LobbyDemo.Glue
         /// <summary>남은 소환권이 걸리는 노드.</summary>
         public const RedDotType SummonNode = RedDotType.ShopPackage;
 
-        /// <summary>미확인 강화 리포트가 걸리는 노드.</summary>
-        public const RedDotType EnhanceReportNode = RedDotType.CharacterLevelUp;
+        /// <summary>미확인 보상 기록이 걸리는 노드.</summary>
+        public const RedDotType RewardRecordNode = RedDotType.CharacterLevelUp;
 
         /// <summary>완료된 일일 임무가 걸리는 노드.</summary>
         public const RedDotType DailyQuestNode = RedDotType.QuestDaily;
@@ -43,7 +43,7 @@ namespace LobbyDemo.Glue
             if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
             Relay(viewModel.RemainingSummons, SummonNode);
-            Relay(viewModel.UnreadEnhanceReports, EnhanceReportNode);
+            Relay(viewModel.UnreadRewards, RewardRecordNode);
             Relay(viewModel.CompletedDailyQuests, DailyQuestNode);
         }
 

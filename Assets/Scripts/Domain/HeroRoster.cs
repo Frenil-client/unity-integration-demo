@@ -13,6 +13,9 @@ namespace LobbyDemo.Domain
         /// <summary>일일 임무 하나가 완료되는 강화 횟수.</summary>
         public const int EnhancementsPerQuest = 3;
 
+        /// <summary>일일 임무 보상 1개당 붙는 축복 배율 (공격력 +10%).</summary>
+        public const double BlessingPerReward = 0.10;
+
         private static readonly (string Name, HeroClass Class, int Atk, int Mag, int Def, int Res)[] Summonable =
         {
             ("카일런", HeroClass.Warrior, 620, 180, 540, 210),
@@ -26,8 +29,13 @@ namespace LobbyDemo.Domain
         private readonly List<Hero> _heroes = new List<Hero>();
         private readonly Random _random = new Random(20260819);
 
+        // 축복은 이 객체 하나를 소스로 삼는다. 덕분에 몇 중첩이든
+        // RemoveModifiersFrom 한 번으로 정확히 걷힌다.
+        private readonly object _blessingSource = new object();
+
         private int _nextSummon;
         private int _enhanceProgress;
+        private int _blessingStacks;
 
         public IReadOnlyList<Hero> Heroes => _heroes;
 
@@ -39,6 +47,12 @@ namespace LobbyDemo.Domain
 
         /// <summary>다음 일일 임무 완료까지 남은 강화 횟수.</summary>
         public int EnhancementsUntilQuest => EnhancementsPerQuest - _enhanceProgress;
+
+        /// <summary>현재 축복 중첩 수.</summary>
+        public int BlessingStacks => _blessingStacks;
+
+        /// <summary>현재 축복 배율. 0.2면 공격력 +20%.</summary>
+        public double BlessingPercent => _blessingStacks * BlessingPerReward;
 
         public HeroRoster()
         {
@@ -55,6 +69,9 @@ namespace LobbyDemo.Domain
             var s = Summonable[_nextSummon++];
             var hero = new Hero(s.Name, s.Class, s.Atk, s.Mag, s.Def, s.Res);
             _heroes.Add(hero);
+
+            // 새로 온 캐릭터에게도 지금까지 쌓인 축복을 적용한다.
+            hero.SetBlessing(_blessingSource, BlessingPercent);
             return hero;
         }
 
@@ -82,6 +99,21 @@ namespace LobbyDemo.Domain
             }
 
             return new EnhanceResult(hero, id, amount, improved, questCompleted);
+        }
+
+        /// <summary>
+        /// 축복을 중첩시키고 보유 캐릭터 전체에 다시 적용한다.
+        /// 각 캐릭터에서 기존 축복을 걷어내고 새 배율로 다시 거는 방식이라,
+        /// 중첩이 늘어도 이전 보정이 남아 겹치지 않는다.
+        /// </summary>
+        public void AddBlessing(int stacks)
+        {
+            if (stacks <= 0) return;
+
+            _blessingStacks += stacks;
+
+            foreach (var hero in _heroes)
+                hero.SetBlessing(_blessingSource, BlessingPercent);
         }
     }
 

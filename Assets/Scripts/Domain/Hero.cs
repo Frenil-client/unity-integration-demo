@@ -78,6 +78,21 @@ namespace LobbyDemo.Domain
             return ValueOf(id) != before;
         }
 
+        /// <summary>
+        /// 축복처럼 바깥에서 거는 보정을 이 소스 기준으로 다시 건다.
+        /// 먼저 같은 소스의 기존 보정을 걷어내고 새로 붙이므로, 중첩이 늘어도
+        /// 값이 겹쳐 쌓이지 않는다. percent가 0이면 걷어내기만 한다.
+        ///
+        /// 강화(AddBaseValue)와 달리 이건 모디파이어라 언제든 정확히 원복된다.
+        /// </summary>
+        public void SetBlessing(object source, double percent)
+        {
+            Stats.RemoveModifiersFrom(source);
+
+            if (percent > 0)
+                Stats.AddModifier(StatId.AttackPower, StatModifierType.PercentAdd, percent, source);
+        }
+
         public static IReadOnlyList<StatId> RatedStats => Rated;
 
         public static string ClassLabel(HeroClass heroClass) => heroClass switch

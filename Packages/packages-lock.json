@@ -1,11 +1,11 @@
 {
   "dependencies": {
     "com.frenil.mvvm": {
-      "version": "https://github.com/Frenil-client/unity-mvvm.git#v1.1.1",
+      "version": "https://github.com/Frenil-client/unity-mvvm.git#v1.2.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "32c0aeb42651bf8e3ddfccd6d38f4601feb90930"
+      "hash": "6f6145d52edf209f0437e6155581b3504f88abe5"
     },
     "com.frenil.reddot-system": {
       "version": "https://github.com/Frenil-client/unity-reddot-system.git#v1.1.2",
@@ -17,11 +17,11 @@
       "hash": "e6eab5c629a22fd2fd26ce9dd27eec0dff0377f9"
     },
     "com.frenil.stat-system": {
-      "version": "https://github.com/Frenil-client/unity-stat-system.git#v2.0.1",
+      "version": "https://github.com/Frenil-client/unity-stat-system.git#v3.0.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "f8098494fde501d9e811d587795a57657169bf09"
+      "hash": "38ff67cb296f8b51996d1c1ecd4a628e6a200ecb"
     },
     "com.unity.ai.navigation": {
       "version": "2.0.10",

@@ -22,7 +22,7 @@ namespace LobbyDemo.Tests
             using var vm = new LobbyViewModel();
 
             Assert.AreEqual(2, vm.Cards.Count);
-            Assert.AreEqual(0, vm.UnreadEnhanceReports.Value);
+            Assert.AreEqual(0, vm.UnreadRewards.Value);
             Assert.AreEqual(0, vm.CompletedDailyQuests.Value);
             Assert.IsTrue(vm.CanSummon.Value);
             Assert.Greater(vm.RemainingSummons.Value, 0);
@@ -58,7 +58,7 @@ namespace LobbyDemo.Tests
         }
 
         [Test]
-        public void Enhancing_AccumulatesReports_AndUnreadCountTracksThem()
+        public void Enhancing_AccumulatesRecords_AndUnreadCountTracksThem()
         {
             using var vm = new LobbyViewModel();
 
@@ -66,7 +66,7 @@ namespace LobbyDemo.Tests
                 vm.EnhanceRandomHero();
 
             Assert.Greater(vm.Reports.Count, 0);
-            Assert.AreEqual(vm.Reports.Count, vm.UnreadEnhanceReports.Value);
+            Assert.AreEqual(vm.Reports.Count, vm.UnreadRewards.Value);
         }
 
         // 세 레드닷 소스가 서로 다른 가지에 있으므로, 각각 독립적으로 오르내려야 한다.
@@ -115,7 +115,7 @@ namespace LobbyDemo.Tests
             vm.OpenRewardPopup();
 
             Assert.IsTrue(vm.IsRewardPopupOpen.Value);
-            Assert.AreEqual(0, vm.UnreadEnhanceReports.Value);
+            Assert.AreEqual(0, vm.UnreadRewards.Value);
             Assert.AreEqual(reportCount, vm.Reports.Count, "여는 것만으로 목록이 비면 안 된다");
         }
 
@@ -130,7 +130,7 @@ namespace LobbyDemo.Tests
 
             Assert.IsFalse(vm.IsRewardPopupOpen.Value);
             Assert.AreEqual(0, vm.Reports.Count);
-            Assert.AreEqual(0, vm.UnreadEnhanceReports.Value);
+            Assert.AreEqual(0, vm.UnreadRewards.Value);
         }
 
         // X 버튼과 바깥 클릭이 같은 경로로 들어오므로, 닫힌 상태에서 또 불려도 안전해야 한다.
@@ -144,7 +144,83 @@ namespace LobbyDemo.Tests
             vm.CloseRewardPopup();
 
             Assert.AreEqual(reportCount, vm.Reports.Count);
-            Assert.AreEqual(reportCount, vm.UnreadEnhanceReports.Value);
+            Assert.AreEqual(reportCount, vm.UnreadRewards.Value);
+        }
+
+        // 임무 보상은 축복(모디파이어)이다. 기본값은 건드리지 않고 최종값만 올린다.
+        [Test]
+        public void AddBlessing_RaisesFinalAttack_ButLeavesBaseAlone()
+        {
+            var roster = new HeroRoster();
+            var hero = roster.Heroes[0];          // 카일런, 공격력 620
+            int baseAttack = (int)hero.Stats.GetBaseValue(StatId.AttackPower).Round();
+
+            roster.AddBlessing(1);                // +10%
+
+            Assert.AreEqual(baseAttack, (int)hero.Stats.GetBaseValue(StatId.AttackPower).Round(),
+                "기본값은 그대로여야 한다");
+            Assert.AreEqual(682, hero.ValueOf(StatId.AttackPower), "620 × 1.1");
+        }
+
+        // 중첩할 때 이전 축복을 걷어내고 새 배율로 다시 걸므로 곱해지지 않는다.
+        // 걷어내지 않으면 620 × 1.1 × 1.1 = 750이 되어버린다.
+        [Test]
+        public void AddBlessing_Stacks_WithoutCompounding()
+        {
+            var roster = new HeroRoster();
+            var hero = roster.Heroes[0];
+
+            roster.AddBlessing(1);
+            roster.AddBlessing(1);
+
+            Assert.AreEqual(2, roster.BlessingStacks);
+            Assert.AreEqual(744, hero.ValueOf(StatId.AttackPower), "620 × 1.2 (1.1 × 1.1 이 아니다)");
+        }
+
+        [Test]
+        public void Blessing_AppliesToHeroesSummonedLater()
+        {
+            var roster = new HeroRoster();
+            roster.AddBlessing(2);                // +20%
+
+            var summoned = roster.Summon();       // 이든, 공격력 580
+
+            Assert.AreEqual(696, summoned.ValueOf(StatId.AttackPower), "580 × 1.2");
+        }
+
+        // 임무를 수령하면 그 기록이 보상 목록에 남고, 읽으라는 알림이 보상 버튼에 켜진다.
+        [Test]
+        public void ClaimDailyQuests_AddsRecord_AndLightsTheRewardDot()
+        {
+            using var vm = new LobbyViewModel();
+            for (int i = 0; i < HeroRoster.EnhancementsPerQuest; i++)
+                vm.EnhanceRandomHero();
+
+            vm.OpenRewardPopup();
+            vm.CloseRewardPopup();                // 기존 기록을 비워 둔다
+            Assert.AreEqual(0, vm.Reports.Count);
+            Assert.AreEqual(0, vm.UnreadRewards.Value);
+
+            vm.ClaimDailyQuests();
+
+            Assert.AreEqual(1, vm.Reports.Count, "임무 보상도 기록에 남는다");
+            Assert.AreEqual(1, vm.UnreadRewards.Value);
+            Assert.AreEqual(0, vm.CompletedDailyQuests.Value);
+        }
+
+        // Stat 모디파이어 -> 브리지 -> Observable -> 카드까지 이어지는지.
+        [Test]
+        public void ClaimDailyQuests_RaisesCombatPowerOnExistingCards()
+        {
+            using var vm = new LobbyViewModel();
+            for (int i = 0; i < HeroRoster.EnhancementsPerQuest; i++)
+                vm.EnhanceRandomHero();
+
+            int before = vm.Cards[0].CombatPower.Value;
+
+            vm.ClaimDailyQuests();
+
+            Assert.Greater(vm.Cards[0].CombatPower.Value, before);
         }
 
         // Stat.Changed -> StatObservableBridge -> Observable 로 이어지는 경로.

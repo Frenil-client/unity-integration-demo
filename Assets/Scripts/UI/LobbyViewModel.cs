@@ -20,7 +20,7 @@ namespace LobbyDemo.UI
         private readonly Observable<string> _log =
             new Observable<string>("강화하면 리포트가 쌓입니다. 버튼의 빨간 점이 각 알림, 상단 배지가 그 합계입니다.");
 
-        private readonly Observable<int> _unreadEnhanceReports = new Observable<int>(0);
+        private readonly Observable<int> _unreadRewards = new Observable<int>(0);
         private readonly Observable<int> _remainingSummons = new Observable<int>(0);
         private readonly Observable<int> _completedDailyQuests = new Observable<int>(0);
         private readonly Observable<bool> _canSummon = new Observable<bool>(false);
@@ -28,13 +28,13 @@ namespace LobbyDemo.UI
 
         public IReadOnlyObservableList<HeroCardViewModel> Cards => _cards;
 
-        /// <summary>팝업에 표시할 강화 리포트 목록. 확인하고 닫으면 비워진다.</summary>
+        /// <summary>팝업에 표시할 보상 기록(강화 리포트 + 임무 보상). 확인하고 닫으면 비워진다.</summary>
         public IReadOnlyObservableList<string> Reports => _reports;
 
         public IReadOnlyObservable<string> Log => _log;
 
-        /// <summary>아직 확인하지 않은 강화 리포트 수. Character 레드닷의 소스다.</summary>
-        public IReadOnlyObservable<int> UnreadEnhanceReports => _unreadEnhanceReports;
+        /// <summary>아직 확인하지 않은 보상 기록 수. Character 레드닷의 소스다.</summary>
+        public IReadOnlyObservable<int> UnreadRewards => _unreadRewards;
 
         /// <summary>남은 소환권 수. Shop 레드닷의 소스다.</summary>
         public IReadOnlyObservable<int> RemainingSummons => _remainingSummons;
@@ -70,7 +70,7 @@ namespace LobbyDemo.UI
             }
 
             _reports.Add($"{result.Hero.Name} · {statName} +{result.Amount} → {result.Hero.ValueOf(result.StatId)}");
-            _unreadEnhanceReports.Value = _reports.Count;
+            _unreadRewards.Value = _reports.Count;
             _log.Value = $"{result.Hero.Name} · {statName} +{result.Amount} (전투력 {result.Hero.CombatPower})";
 
             if (result.QuestCompleted)
@@ -95,20 +95,20 @@ namespace LobbyDemo.UI
         }
 
         /// <summary>
-        /// 강화 리포트 팝업을 연다. 여는 순간 "확인"으로 간주해 레드닷이 꺼진다.
-        /// 볼 리포트가 없으면 열지 않는다.
+        /// 보상 팝업을 연다. 여는 순간 "확인"으로 간주해 레드닷이 꺼진다.
+        /// 볼 기록이 없으면 열지 않는다.
         /// </summary>
         public void OpenRewardPopup()
         {
             if (_reports.Count == 0)
             {
-                _log.Value = "확인할 강화 리포트가 없습니다.";
+                _log.Value = "확인할 보상 기록이 없습니다.";
                 return;
             }
 
             _isRewardPopupOpen.Value = true;
-            _unreadEnhanceReports.Value = 0;
-            _log.Value = $"강화 리포트 {_reports.Count}건을 확인하는 중입니다.";
+            _unreadRewards.Value = 0;
+            _log.Value = $"보상 기록 {_reports.Count}건을 확인하는 중입니다.";
         }
 
         /// <summary>
@@ -125,10 +125,16 @@ namespace LobbyDemo.UI
             // 목록을 비우기 전에 먼저 닫아, 팝업이 사라지는 순간에 행이 지워지는 것이 보이지 않게 한다.
             _isRewardPopupOpen.Value = false;
             _reports.Clear();
-            _log.Value = $"강화 리포트 {count}건을 확인했습니다.";
+            _log.Value = $"보상 기록 {count}건을 확인했습니다.";
         }
 
-        /// <summary>완료된 일일 임무 보상을 모두 수령한다. Quest 레드닷이 꺼지는 지점.</summary>
+        /// <summary>
+        /// 완료된 일일 임무 보상을 모두 수령한다. Quest 레드닷이 꺼지는 지점.
+        ///
+        /// 보상은 전 캐릭터에 걸리는 축복(공격력 %)이다. 강화와 달리 기본값을 건드리지 않고
+        /// 모디파이어로 얹히므로, 카드의 공격력과 전투력이 즉시 오르면서도 언제든 정확히 원복된다.
+        /// 수령 기록은 보상 팝업 목록에 남는다.
+        /// </summary>
         public void ClaimDailyQuests()
         {
             if (_completedDailyQuests.Value == 0)
@@ -137,8 +143,14 @@ namespace LobbyDemo.UI
                 return;
             }
 
-            _log.Value = $"일일 임무 보상 {_completedDailyQuests.Value}개를 수령했습니다.";
+            int claimed = _completedDailyQuests.Value;
             _completedDailyQuests.Value = 0;
+            _roster.AddBlessing(claimed);
+
+            string record = $"일일 임무 {claimed}개 수령 · 축복 공격력 +{_roster.BlessingPercent:P0}";
+            _reports.Add(record);
+            _unreadRewards.Value = _reports.Count;
+            _log.Value = record;
         }
 
         private void RefreshSummonState()

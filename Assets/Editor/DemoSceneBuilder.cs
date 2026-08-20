@@ -162,7 +162,7 @@ namespace LobbyDemo.EditorTools
             // 헤더 배지(MainMenu)에는 세 가지의 합계가 트리를 타고 올라온다.
             // 강화 버튼은 알림을 만드는 쪽이라 배지가 없다.
             AttachButtonBadge(summonButton.GetComponent<RectTransform>(), LobbyRedDotBridge.SummonNode);
-            AttachButtonBadge(rewardButton.GetComponent<RectTransform>(), LobbyRedDotBridge.EnhanceReportNode);
+            AttachButtonBadge(rewardButton.GetComponent<RectTransform>(), LobbyRedDotBridge.RewardRecordNode);
             AttachButtonBadge(questButton.GetComponent<RectTransform>(), LobbyRedDotBridge.DailyQuestNode);
 
             // 로그 - 버튼 바로 아래에 둔다. 피드백은 그 동작을 한 자리 가까이 있는 편이 낫고,
@@ -199,7 +199,7 @@ namespace LobbyDemo.EditorTools
 
         }
 
-        // 강화 리포트 팝업. 컴포넌트는 항상 활성인 바깥 오브젝트에 두고, 실제로 켜고 끄는 것은
+        // 보상 기록 팝업. 컴포넌트는 항상 활성인 바깥 오브젝트에 두고, 실제로 켜고 끄는 것은
         // 그 안의 Container다. 컴포넌트가 붙은 오브젝트를 직접 끄면 바인딩 시점이 꼬이기 쉽다.
         private static RewardPopupView BuildRewardPopup(Transform parent)
         {
@@ -230,7 +230,7 @@ namespace LobbyDemo.EditorTools
             var titleBar = Empty("TitleBar", panel);
             FixedHeight(titleBar, 88f);
             HorizontalLayout(titleBar, 12, 0);
-            var popupTitle = Text("Title", titleBar, "강화 리포트", 44f);
+            var popupTitle = Text("Title", titleBar, "보상 기록", 44f);
             Flexible(popupTitle.rectTransform, width: 1f);
 
             var closeButton = Button("CloseButton", titleBar, "X");
